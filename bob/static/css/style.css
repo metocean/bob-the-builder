@@ -1,0 +1,31 @@
+.status {
+    display: inline-block;
+    max-width: 100%;
+    padding: 3%;
+    border-radius: 10%;
+    color: white;
+    *border: 1px solid;
+}
+.status {
+    background-color: #777;
+}
+.status-success {
+    background-color: #5cb85c;
+}
+.status-pending {
+    background-color: #5bc0de;
+}
+.status-building {
+    background-color: #f0ad4e;
+}
+.status-problem {
+    background-color: #d9534f;
+}
+.main-div {
+    vertical-align: top;
+    padding-top: 15px;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}

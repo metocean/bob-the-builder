@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Bob The Build Task</title>
+    <meta name="description" content="Bob The Build Task">
+
+    <script src="{{ url_for('static', filename='js/jquery-3.1.0.js') }}" type="text/javascript" ></script>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .back {
+            display: inline-block;
+            border-radius: 7%;
+            padding: 0.2%;
+            color: white;
+            *border: 1px solid;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-div">
+        <a href="/view/tasks">BACK TO TASKS</a>
+        <div class="panel panel-default">
+            <div class="panel-heading">Details:</div>
+            <table id="details" class="table" >
+                <tbody>
+                {% for key, value in details.iteritems() %}
+                   <tr>
+                        <th width="200px"> {{ key }} </th>
+                        <td> {{ value }} </td>
+                   </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">Build Log: {{ build_log_path }}</div>
+            <pre>{{ build_log_tail }}</pre>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">Run Log: {{ run_log_path }}</div>
+            <pre>{{ run_log_tail }}</pre>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">Push Log: {{ push_log_path }}</div>
+            <pre>{{ push_log_tail }}</pre>
+        </div>
+
+        <a href="/view/tasks">BACK TO TASKS</a>
+    </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+</body>
+</html>
