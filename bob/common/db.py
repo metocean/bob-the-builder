@@ -108,7 +108,7 @@ def db_reload_task(task, db=boto3.resource('dynamodb')):
 def db_load_all_tasks(db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.scan()
-    if 'Items' not in response:
+    if 'Items' in response:
         for task in response['Items']:
             yield Task.from_dict(task)
 
