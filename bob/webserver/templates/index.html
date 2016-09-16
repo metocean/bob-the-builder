@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Bob The Build Tasks</title>
+    <meta name="description" content="Bob The Build Tasks">
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.1.0.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.dataTables-1.10.12.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/jquery.dataTables-1.10.12.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .table tbody tr:hover td, .table tbody tr:hover th {
+            background-color: #eeeeea;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<script>
+$(document).ready(function() {
+
+    var tasksTable = $('#tasks').DataTable( {
+        order: [[ 5, "desc" ]]
+    } );
+
+    tasksTable.on('click', 'tr', function () {
+        var data = tasksTable.row( this ).data();
+        window.location = '/task/' + data[0] + '/' + data[1] + '/' + data[2] + '/' + data[6]
+    } );
+
+    var buildsTable = $('#builds').DataTable( {
+        order: [[ 0, "asc" ]]
+    } );
+
+    buildsTable.on('click', 'tr', function () {
+        var data = buildsTable.row( this ).data();
+        window.location = '/build/' + data[0] + '/' + data[1]
+    } );
+
+    setInterval( function () {
+        location.reload();
+    }, 60000 );
+} );
+</script>
+
+<body>
+    <div class="main-div">
+        <table id="tasks" class="table" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Git Repo</th>
+                    <th>Branch</th>
+                    <th>Tag</th>
+                    <th>Status</th>
+                    <th>Status Message</th>
+                    <th>Modified At</th>
+                    <th>Created At</th>
+                    <th>Run Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.git_repo }}</td>
+                    <td>{{ task.git_branch }}</td>
+                    <td>{{ task.git_tag }}</td>
+                    <td>{{ task.status }}</td>
+                    <td>{{ task.get_status_message() }}</td>
+                    <td>{{ task.modified_at }}</td>
+                    <td>{{ task.created_at }}</td>
+                    <td>{{ task.run_time() }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table id="builds" class="table" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Git Repo</th>
+                    <th>Branch</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for build in builds %}
+                <tr>
+                    <td>{{ build.git_repo }}</td>
+                    <td>{{ build.git_branch }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

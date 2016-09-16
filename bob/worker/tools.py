@@ -1,65 +1,10 @@
 import errno
-import os
-import fcntl
-import subprocess
-import pycurl
 import json
-from bob.exceptions import BobTheBuilderException
+import os
+import pycurl
+import subprocess
 
-
-class LockFile(object):
-    def __init__(self, file_path, lock_on_with=True):
-        self._file_path = file_path
-        self._fd = None
-        self._lock_on_with = lock_on_with
-
-    def __enter__(self):
-        if self._lock_on_with:
-            self.acquire()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.release()
-
-    def try_acquire(self):
-        '''
-        :return: Returns True if the lock was acquired otherwise it returns False.
-        '''
-        if not os.path.exists(os.path.dirname(self._file_path)):
-            mkdir_p(os.path.dirname(self._file_path))
-
-        if not self._fd:
-            self._fd = os.open(self._file_path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
-
-        try:
-            fcntl.lockf(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            return True
-        except IOError:
-            pass
-
-        os.close(self._fd)
-        self._fd = None
-        return False
-
-    def acquire(self):
-        '''
-        waits until the file lock is acquired.
-        '''
-        if not self._fd:
-            self._fd = os.open(self._file_path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY)
-
-        fcntl.lockf(self._fd, fcntl.LOCK_EX)
-
-    def release(self):
-        if not self._fd:
-            return
-
-        fcntl.lockf(self._fd, fcntl.LOCK_UN)
-        os.close(self._fd)
-        self._fd = None
-
-    def close(self):
-        self.release()
+from bob.common.exceptions import BobTheBuilderException
 
 
 def mkdir_p(path):
@@ -106,7 +51,6 @@ def url_download(url, filepath, auth_username=None, auth_password=None):
 
 
 def url_get_utf8(url, auth_username=None, auth_password=None):
-
     status = None
     content = None
     try:
@@ -139,9 +83,58 @@ def url_get_utf8(url, auth_username=None, auth_password=None):
 
 
 def url_get_json(url, auth_username=None, auth_password=None):
-
     status, content = url_get_utf8(url, auth_username, auth_password)
     if not content:
         return status, None
 
     return status, json.loads(content)
+
+
+def rename_basedir(dir_path, new_basename):
+    if dir_path.endswith('/'):
+        basedir = os.path.split(os.path.split(dir_path)[0])[1]
+        new_path = os.path.join(dir_path[:dir_path.rindex(basedir)-1], new_basename) + '/'
+    else:
+        basedir = os.path.split(dir_path)[1]
+        new_path = os.path.join(dir_path[:dir_path.rindex(basedir)-1], new_basename)
+    os.rename(dir_path, new_path)
+    return new_path
+
+
+def base_dirname(dir_path):
+    # if not os.path.isdir(dir_path):
+    #     return None
+    if dir_path.endswith('/'):
+        return os.path.split(os.path.split(dir_path)[0])[1]
+    else:
+        return os.path.split(dir_path)[1]
+
+
+
+# import smtplib
+# from email.mime.text import MIMEText
+# from bob.settings import get_email_settings
+#
+# def send_email(to_address, subject, body):
+#
+#     settings = get_email_settings()
+#     if not settings:
+#         return
+#
+#     server = smtplib.SMTP(settings['host'], settings['port'])
+#
+#     if 'debug' in settings:
+#         server.set_debuglevel(bool(settings['debug']))
+#
+#     if 'starttls' in settings and settings['starttls']:
+#         server.ehlo()
+#         server.starttls()
+#
+#     msg = MIMEText(body)
+#     msg['Subject'] = subject
+#     msg['From'] = settings['from']
+#     msg['To'] = ','.join(to_address)
+#
+#     server.login(settings['login'], settings['password'])
+#     server.sendmail(settings['from'], to_address, msg.as_string())
+#     server.quit()
