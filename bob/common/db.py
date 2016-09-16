@@ -109,9 +109,8 @@ def db_load_all_tasks(db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.scan()
     if 'Items' not in response:
-        return []
-    for task in response['Items']:
-        yield Task.from_dict(task)
+        for task in response['Items']:
+            yield Task.from_dict(task)
 
 
 def _db_create_build_table(db=boto3.resource('dynamodb')):
@@ -175,10 +174,9 @@ def db_load_build(git_repo, git_branch, db=boto3.resource('dynamodb')):
 def db_load_all_builds(db=boto3.resource('dynamodb')):
     table = db.Table(_build_table_name)
     response = table.scan()
-    if 'Items' not in response:
-        return []
-    for build in response['Items']:
-        yield Build.from_dict(build)
+    if 'Items' in response:
+        for build in response['Items']:
+            yield Build.from_dict(build)
 
 
 print('creating AWS DynamoDB tables')
