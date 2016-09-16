@@ -44,17 +44,6 @@ def enqueue_task(task, sqs=boto3.resource('sqs')):
 def get_task_queue(sqs=boto3.resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
 
-#
-# def dequeue_task(sqs=boto3.resource('sqs'), wait_time_seconds=2):
-#     queue = sqs.get_queue_by_name(QueueName=_task_queue_name)
-#     messages = queue.receive_messages(MaxNumberOfMessages=1,
-#                                       WaitTimeSeconds=wait_time_seconds)
-#     if not messages or len(messages) == 0:
-#         return None
-#     task = Task.from_dict(json.loads(messages[0].body))
-#     messages[0].delete()
-#     return task
-
 
 def enqueue_cancel(task, sqs=boto3.resource('sqs')):
 
@@ -70,5 +59,5 @@ def get_task_queue(sqs=boto3.resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
 
 
-print('creating AWS SQS queues')
-_create_task_queue()
+# print('creating AWS SQS queues')
+# _create_task_queue()
