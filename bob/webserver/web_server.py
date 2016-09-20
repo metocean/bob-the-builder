@@ -121,7 +121,7 @@ class GunicornApplication(BaseApplication):
         return self.application
 
 
-if __name__ == "__main__":
+def main():
     db.create_task_table()
     queues._create_task_queue()
 
@@ -130,3 +130,7 @@ if __name__ == "__main__":
         'workers': multiprocessing.cpu_count(),
     }
     GunicornApplication(app, options).run()
+
+
+if __name__ == "__main__":
+    main()
