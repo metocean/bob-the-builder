@@ -56,8 +56,8 @@ def _send_state_email(task, state, message, email_addresses):
     try:
         subject = 'build {0} {1} {2} is {3}'.format(
                task.git_repo,
-               task.branch,
-               task.tag,
+               task.git_branch,
+               task.git_tag,
                state,
                message)
 
