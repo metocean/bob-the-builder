@@ -59,5 +59,4 @@ def get_task_queue(sqs=boto3.resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
 
 
-# print('creating AWS SQS queues')
-# _create_task_queue()
+

@@ -6,16 +6,16 @@ from multiprocessing import Process
 from time import sleep
 
 from bob.common.entities import (State, Task)
-from bob.common.queues import get_task_queue
 
-from bob.common.db import (db_save_task,
-                           db_load_task,
-                           db_reload_task)
+import bob.common.queues as queues
+import bob.common.db as db
+
 from bob.worker.builder import (do_download_git_repo,
                                 do_build_dockers,
                                 do_test_dockers,
                                 do_push_dockers,
                                 do_clean_up)
+
 from bob.worker.docker_client import (remove_all_docker_networks,
                                       remove_all_docker_images)
 
@@ -36,14 +36,14 @@ def _set_state(task, state, message=None):
     task.status_message = message
     task.events.append(event)
 
-    db_save_task(task)
+    db.save_task(task)
 
-    return db_reload_task(task)
+    return db.reload_task(task)
 
 
 def _run_build(git_repo, git_branch, git_tag, created_at):
 
-    task = db_load_task(git_repo, git_branch, git_tag, created_at)
+    task = db.load_task(git_repo, git_branch, git_tag, created_at)
     build_path = None
     source_path = None
     docker_compose_file = None
@@ -130,12 +130,15 @@ def _cancel_task(task, process):
 
 
 def main():
+    db.create_task_table()
+    queues._create_task_queue()
+
     print('removing all docker networks')
     remove_all_docker_networks()
     print('removing all docker images')
     remove_all_docker_images()
 
-    task_queue = get_task_queue()
+    task_queue = queues.get_task_queue()
 
     while task_queue:
 
@@ -167,7 +170,7 @@ def main():
                 process.join(2)
 
                 if process.is_alive():
-                    task = db_reload_task(task)
+                    task = db.reload_task(task)
                     if task.status == State.cancel:
                         _cancel_task(task, process)
 
@@ -175,7 +178,7 @@ def main():
             pass
 
         if process and process.is_alive():
-            _cancel_task(db_reload_task(task), process)
+            _cancel_task(db.reload_task(task), process)
 
 
 if __name__ == "__main__":

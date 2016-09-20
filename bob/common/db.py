@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import boto3
-#from boto3.dynamodb.conditions import Attr
 
 from bob.common.entities import Task
 from bob.worker.aws_helpers import error_code_equals
@@ -20,7 +19,7 @@ def _table_exists(table_name):
         raise e
 
 
-def _db_create_task_table(db=boto3.resource('dynamodb')):
+def create_task_table(db=boto3.resource('dynamodb')):
     """
     creates a new table if it does not exits, blocks until it does.
     :param db: boto3.resource('dynamodb')
@@ -60,7 +59,7 @@ def _db_create_task_table(db=boto3.resource('dynamodb')):
     print('table {0} created'.format(_task_table_name))
 
 
-def db_save_task(task, db=boto3.resource('dynamodb')):
+def save_task(task, db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
 
     task.modified_at = datetime.utcnow()
@@ -72,11 +71,11 @@ def db_save_task(task, db=boto3.resource('dynamodb')):
     table.put_item(Item=dict)
 
 
-def db_load_task(git_repo,
-                 git_branch,
-                 git_tag,
-                 created_at,
-                 db=boto3.resource('dynamodb')):
+def load_task(git_repo,
+              git_branch,
+              git_tag,
+              created_at,
+              db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.get_item(
         Key={
@@ -91,7 +90,7 @@ def db_load_task(git_repo,
     return None
 
 
-def db_reload_task(task, db=boto3.resource('dynamodb')):
+def reload_task(task, db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.get_item(
         Key={
@@ -104,10 +103,9 @@ def db_reload_task(task, db=boto3.resource('dynamodb')):
     return Task.from_dict(response['Item'])
 
 
-def db_load_all_tasks(db=boto3.resource('dynamodb')):
+def load_all_tasks(db=boto3.resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.scan()
     if 'Items' in response:
         for task in response['Items']:
             yield Task.from_dict(task)
-

@@ -5,11 +5,13 @@ from gunicorn.six import iteritems
 import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
-from bob.common.entities import State
 
+from bob.common.entities import State
 from bob.common import db
 from bob.common import queues
 from bob.common.entities import Task
+
+import os
 
 
 app = Flask(__name__)  # Standard Flask app
@@ -40,16 +42,16 @@ def after_request(response):
 
 @app.route('/')
 def tasks_view():
-    return render_template('tasks.html', tasks=db.db_load_all_tasks())
+    return render_template('tasks.html', tasks=db.load_all_tasks())
 
 
 @app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['GET'])
 def task_view(owner, repo, branch, tag, created_at):
 
-    task = db.db_load_task(git_repo=owner + '/' + repo,
-                           git_branch=branch,
-                           git_tag=tag,
-                           created_at=parse_date(created_at))
+    task = db.load_task(git_repo=owner + '/' + repo,
+                        git_branch=branch,
+                        git_tag=tag,
+                        created_at=parse_date(created_at))
 
     if not task:
         return 'Task not found', 404
@@ -65,13 +67,13 @@ def task_view(owner, repo, branch, tag, created_at):
 def task_action(owner, repo, branch, tag, created_at):
 
     if request.form['action'] == 'cancel':
-        task = db.db_load_task(git_repo=owner + '/' + repo,
-                               git_branch=branch,
-                               git_tag=tag,
-                               created_at=parse_date(created_at))
+        task = db.load_task(git_repo=owner + '/' + repo,
+                            git_branch=branch,
+                            git_tag=tag,
+                            created_at=parse_date(created_at))
 
         task.status = State.cancel
-        db.db_save_task(task)
+        db.save_task(task)
 
         return 'CANCELED'
 
@@ -95,7 +97,7 @@ def github_webhook(data):
     tag = data['release']['tag_name']
 
     task = Task(git_repo=repo, git_branch=branch, git_tag=tag)
-    db.db_save_task(task)
+    db.save_task(task)
     queues.enqueue_task(task)
 
     print("Got push with: {0}".format(data))
@@ -120,7 +122,9 @@ class GunicornApplication(BaseApplication):
 
 
 if __name__ == "__main__":
-    import os
+    db.create_task_table()
+    queues._create_task_queue()
+
     options = {
         'bind': '%s:%s' % ('0.0.0.0', os.environ.get('BOB-BUILDER-PORT', '8080')),
         'workers': multiprocessing.cpu_count(),
