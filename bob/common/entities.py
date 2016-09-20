@@ -85,71 +85,30 @@ class Task(object):
             result['logs'] = self.logs
 
         return result
-
-
-class Build(object):
-    def __init__(self,
-                 git_repo,
-                 git_branch='master'):
-        self.git_repo = git_repo
-        self.git_branch = git_branch
-        self.docker_compose = {}
-        self.git_hub_login = {}
-        self.docker_hub_login = {}
-        self.notification_emails = []
-
-    def set_git_hub_login(self, login, password):
-        self.git_hub_login = {
-            'login': login,
-            'password': password
-        }
-
-    def set_docker_hub_login(self, login, password):
-        self.docker_hub_login = {
-            'login': login,
-            'password': password
-        }
-
-    def set_docker_compose_build(self,
-                                 docker_compose_file='docker-compose.yml',
-                                 test_service=None):
-        self.docker_compose['docker_compose_file'] = docker_compose_file
-        self.docker_compose['test_service'] = test_service
-
-    def set_service_to_push(self, service_name, docker_image):
-        self.docker_compose['services_to_push'][service_name] = docker_image
-
-    def __repr__(self):
-        return json.dumps(Build.to_dict(self), indent=2)
-
-    @staticmethod
-    def from_dict(dict):
-        build = Build(
-            git_repo=dict['git_repo'],
-            git_branch=dict['git_branch'])
-        build.docker_compose = dict.get('docker_compose', {})
-        build.git_hub_login = dict.get('git_hub_login', {})
-        build.docker_hub_login = dict.get('docker_hub_login', {})
-        build.notification_emails = dict.get('notification_emails', [])
-        return build
-
-    def to_dict(self):
-        result = {
-            'git_repo': self.git_repo,
-            'git_branch': self.git_branch,
-            'git_tag': self.git_tag
-        }
-
-        if self.docker_compose and len(self.docker_compose) > 0:
-            result['docker_compose'] = self.docker_compose
-
-        if self.git_hub_login and len(self.git_hub_login) > 0:
-            result['git_hub_login'] = self.git_hub_login
-
-        if self.docker_hub_login and len(self.docker_hub_login) > 0:
-            result['docker_hub_login'] = self.docker_hub_login
-
-        if self.notification_emails and len(self.notification_emails) > 0:
-            result['notification_emails'] = self.notification_emails
-
-        return result
+#
+#
+# class Build(object):
+#     def __init__(self,
+#                  git_repo,
+#                  git_branch='master'):
+#         self.git_repo = git_repo
+#         self.git_branch = git_branch
+#
+#
+#     def __repr__(self):
+#         return json.dumps(Build.to_dict(self), indent=2)
+#
+#     @staticmethod
+#     def from_dict(dict):
+#         build = Build(
+#             git_repo=dict['git_repo'],
+#             git_branch=dict['git_branch'])
+#         return build
+#
+#     def to_dict(self):
+#         result = {
+#             'git_repo': self.git_repo,
+#             'git_branch': self.git_branch
+#         }
+#
+#         return result

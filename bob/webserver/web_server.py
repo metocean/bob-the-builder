@@ -6,6 +6,7 @@ import traceback
 from dateutil.parser import parse as parse_date
 from bob.common.entities import State
 
+
 app = Flask(__name__)  # Standard Flask app
 webhook = Webhook(app)  # Defines '/postreceive' endpoint
 
@@ -34,9 +35,7 @@ def after_request(response):
 
 @app.route('/')
 def tasks_view():
-    return render_template('index.html',
-                           tasks=db.db_load_all_tasks(),
-                           builds=db.db_load_all_builds())
+    return render_template('tasks.html', tasks=db.db_load_all_tasks())
 
 
 @app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['GET'])

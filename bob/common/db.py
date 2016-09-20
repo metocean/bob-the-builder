@@ -1,13 +1,12 @@
 from datetime import datetime
 
 import boto3
-from boto3.dynamodb.conditions import Attr
+#from boto3.dynamodb.conditions import Attr
 
-from bob.common.entities import Task, State, Build
+from bob.common.entities import Task
 from bob.worker.aws_helpers import error_code_equals
 
 _task_table_name = 'bob-task'
-_build_table_name = 'bob-build'
 
 
 def _table_exists(table_name):
@@ -112,85 +111,3 @@ def db_load_all_tasks(db=boto3.resource('dynamodb')):
         for task in response['Items']:
             yield Task.from_dict(task)
 
-
-def _db_create_build_table(db=boto3.resource('dynamodb')):
-    """
-    creates a new table if it does not exits, blocks until it does.
-    :param db: boto3.resource('dynamodb')
-    """
-    if _table_exists(_build_table_name):
-        return
-
-    table = db.create_table(
-        TableName=_build_table_name,
-        KeySchema=[
-            {
-                'AttributeName': 'git_repo',
-                'KeyType': 'HASH'
-            },
-            {
-                'AttributeName': 'git_branch',
-                'KeyType': 'RANGE'
-            }
-        ],
-        AttributeDefinitions=[
-            {
-                'AttributeName': 'git_repo',
-                'AttributeType': 'S'
-            },
-            {
-                'AttributeName': 'git_branch',
-                'AttributeType': 'S'
-            },
-        ],
-        ProvisionedThroughput={
-            'ReadCapacityUnits': 1,
-            'WriteCapacityUnits': 1
-        }
-    )
-    # Wait until the table exists.
-    table.meta.client.get_waiter('table_exists').wait(TableName=_build_table_name)
-    print('table {0} created'.format(_build_table_name))
-
-
-def db_save_build(build, db=boto3.resource('dynamodb')):
-    table = db.Table(_build_table_name)
-    table.put_item(Item=build.to_dict())
-
-
-def db_load_build(git_repo, git_branch, db=boto3.resource('dynamodb')):
-    table = db.Table(_build_table_name)
-    response = table.get_item(
-        Key={
-            'git_repo': git_repo,
-            'git_branch': git_branch
-        }
-    )
-    if 'Item' in response:
-        return Build.from_dict(response['Item'])
-    return None
-
-
-def db_load_all_builds(db=boto3.resource('dynamodb')):
-    table = db.Table(_build_table_name)
-    response = table.scan()
-    if 'Items' in response:
-        for build in response['Items']:
-            yield Build.from_dict(build)
-
-
-def db_tasks_ps(db=boto3.resource('dynamodb')):
-    table = db.Table(_task_table_name)
-    db_filter = (Attr('status').eq(State.downloading)
-                 | Attr('status').eq(State.building)
-                 | Attr('status').eq(State.testing)
-                 | Attr('status').eq(State.pushing))
-    response = table.scan(FilterExpression=db_filter)
-    if 'Items' in response:
-        for task in response['Items']:
-            yield Task.from_dict(task)
-
-#
-# print('creating AWS DynamoDB tables')
-# _db_create_task_table()
-# _db_create_build_table()

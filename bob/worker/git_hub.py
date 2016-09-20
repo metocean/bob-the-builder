@@ -46,21 +46,21 @@ def _get_tag(auth_username, auth_password, repo, tag_name):
     raise BobTheBuilderException('github tag {0}:{1} not found'.format(repo, tag_name))
 
 
-def download_branch(repo,
-                    file_path,
-                    branch='master',
-                    archive_format='zipball',
-                    login=None,
-                    password=None):
+def _download(url, file_path, login, password):
 
-    # GET /repos/:owner/:repo/:archive_format/:ref
+    status = url_download(url,
+                         file_path,
+                         login,
+                         password)
 
-    return url_download('https://api.github.com/repos/{0}/{1}/{2}'.format(repo,
-                                                                          archive_format,
-                                                                          branch),
-                        file_path,
-                        login,
-                        password)
+    if status == 404:
+        raise BobTheBuilderException('{status}: Could find download "{url}"'.format(url=url, status=status))
+
+    if status == 401:
+        raise BobTheBuilderException('{status}: Could download unauthorized "{url}"'.format(url=url, status=status))
+
+    if status >= 400:
+        raise BobTheBuilderException('{status}: Could download "{url}"'.format(url=url, status=status))
 
 
 def download_release_source(repo, tag_name, output_path, auth_username, auth_password):
@@ -97,9 +97,7 @@ def download_release_source(repo, tag_name, output_path, auth_username, auth_pas
     release_file = os.path.join(output_path, 'src.zip')
     source_path = os.path.join(output_path, 'src')
 
-    status = url_download(download_url, release_file, auth_username, auth_password)
-    if status == 404:
-        raise BobTheBuilderException('Could not download url:{0}'.format(download_url))
+    status = _download(download_url, release_file, auth_username, auth_password)
 
     os.system('unzip {0} -d {1}'.format(release_file, source_path))
 
@@ -129,13 +127,12 @@ def download_branch_source(repo, output_path, branch='master', login=None, passw
     release_file = os.path.join(output_path, 'src.zip')
     source_path = os.path.join(output_path, 'src')
 
-    status = download_branch(repo,
-                             release_file,
-                             branch=branch,
-                             login=login,
-                             password=password)
-    if status == 404:
-        raise BobTheBuilderException('Could not download "{0}:{1}"'.format(repo, branch))
+    _download('https://api.github.com/repos/{0}/{1}/{2}'.format(repo,
+                                                                       'zipball',
+                                                                       branch),
+                        release_file,
+                        login,
+                        password)
 
     os.system('unzip {0} -d {1}'.format(release_file, source_path))
 

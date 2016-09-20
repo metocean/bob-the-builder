@@ -10,8 +10,7 @@ from bob.common.queues import get_task_queue
 
 from bob.common.db import (db_save_task,
                            db_load_task,
-                           db_reload_task,
-                           db_load_build)
+                           db_reload_task)
 from bob.worker.builder import (do_download_git_repo,
                                 do_build_dockers,
                                 do_test_dockers,
@@ -45,12 +44,11 @@ def _set_state(task, state, message=None):
 def _run_build(git_repo, git_branch, git_tag, created_at):
 
     task = db_load_task(git_repo, git_branch, git_tag, created_at)
-    build = None
     build_path = None
     source_path = None
+    docker_compose_file = None
+    notification_emails = None
     try:
-        build = db_load_build(git_repo, git_branch)
-
         while (task.status != State.failed
               and task.status != State.successful):
 
@@ -58,22 +56,28 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
                 task = _set_state(task, State.downloading)
 
             elif task.status == State.downloading:
-                build_path, source_path = do_download_git_repo(task, build)
+                (build_path,
+                 source_path,
+                 docker_compose_file,
+                 services_to_push,
+                 service_to_test,
+                 notification_emails) = do_download_git_repo(task)
+
                 task = _set_state(task, State.building)
 
             elif task.status == State.building:
-                do_build_dockers(task, build, build_path, source_path)
-                if 'test_service' in build.docker_compose:
+                do_build_dockers(task, build_path, source_path, docker_compose_file)
+                if service_to_test:
                     task = _set_state(task, State.testing)
                 else:
                     task = _set_state(task, State.pushing)
 
             elif task.status == State.testing:
-                do_test_dockers(task, build, build_path, source_path)
+                do_test_dockers(task, build_path, source_path, docker_compose_file, service_to_test)
                 task = _set_state(task, State.pushing)
 
             elif task.status == State.pushing:
-                do_push_dockers(task, build, build_path, source_path)
+                do_push_dockers(task, build_path, source_path, services_to_push)
                 task = _set_state(task, State.successful)
 
             else:
@@ -94,7 +98,7 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
         raise ex
 
     finally:
-        do_clean_up(task, build, source_path, build_path)
+        do_clean_up(task, source_path, build_path, docker_compose_file)
 
 
 def _stop_process(process):

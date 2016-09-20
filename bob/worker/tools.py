@@ -23,15 +23,20 @@ def mkdir_if_not_exist(path):
     return path
 
 
-def execute(cmd, logfile):
+def execute(cmd, logfile=None):
 
-    with open(logfile, 'w') as log:
-        error_code = subprocess.call(cmd, shell=True, universal_newlines=True, stdout=log, stderr=log)
+    if logfile:
+        with open(logfile, 'w') as log:
+            error_code = subprocess.call(cmd, shell=True, universal_newlines=True, stdout=log, stderr=log)
+            if error_code:
+                raise BobTheBuilderException('"{0}" exited with {1} check logfile for details {2}'.format(
+                    cmd,
+                    error_code,
+                    logfile))
+    else:
+        error_code = subprocess.call(cmd, shell=True, universal_newlines=True)
         if error_code:
-            raise BobTheBuilderException('"{0}" exited with {1} check logfile for details {2}'.format(
-                cmd,
-                error_code,
-                logfile))
+            raise BobTheBuilderException('"{0}" exited with {1}'.format(cmd, error_code))
 
 
 def url_download(url, filepath, auth_username=None, auth_password=None):

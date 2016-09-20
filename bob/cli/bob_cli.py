@@ -4,20 +4,6 @@ from bob.common import queues
 from bob.common.entities import Task
 
 
-def _list_builds():
-    for build in db.db_load_all_builds():
-        print ('{0}:{1}'.format(build.git_repo, build.git_branch))
-        print (' notify: ' + ','.join(build.notification_emails))
-        print (' docker-compose-file: {0}'.format(build.docker_compose.get('docker_compose_file')))
-        print (' test-service: {0}'.format(build.docker_compose.get('test_service')))
-        print (' services to push:')
-        services_to_push = build.docker_compose.get('services_to_push')
-        if services_to_push:
-            for name in services_to_push:
-                print ('  {0} -> {1}'.format(name, services_to_push[name]))
-        print ('')
-
-
 def _list_tasks():
     for task in db.db_load_all_tasks():
         print ('{0}:{1} {2}  {3}  {4}'.format(task.git_repo,
@@ -28,15 +14,7 @@ def _list_tasks():
 
 
 def cmd_list(args):
-    if len(args) == 1:
-        if args[0] in ('task' or 'tasks'):
-            _list_tasks()
-        _list_builds()
-
-    elif len(args) == 2:
-        if args[0] in ('task' or 'tasks'):
-            _list_tasks()
-        _list_builds()
+    _list_tasks()
 
 
 def cmd_ps(args):
@@ -48,15 +26,10 @@ def _build(repo, branch=None):
     if not branch:
         branch = 'master'
 
-    build = db.db_load_build(repo, branch)
-    if not build:
-        print 'build does not exits, please use "add" cmd to make a new build'
-        return
-
     task = Task(git_repo=repo, git_branch=branch)
     db.db_save_task(task)
     queues.enqueue_task(task)
-    print 'done'
+    print('done')
 
 
 def cmd_build(args):
