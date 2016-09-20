@@ -30,7 +30,6 @@ def _build(repo, branch='master', tag=None):
 
 
 def cmd_build(args):
-    print(args)
     if len(args) == 1:
         _build(args[0])
     elif len(args) == 2:
