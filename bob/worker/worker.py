@@ -9,6 +9,8 @@ from bob.common.entities import (State, Task)
 
 import bob.common.queues as queues
 import bob.common.db as db
+from bob.worker.tools import send_email
+
 
 from bob.worker.builder import (do_download_git_repo,
                                 do_build_dockers,
@@ -20,7 +22,10 @@ from bob.worker.docker_client import (remove_all_docker_networks,
                                       remove_all_docker_images)
 
 
-def _set_state(task, state, message=None):
+def _set_state(task,
+               state,
+               message=None,
+               email_addresses=[]):
 
     now = datetime.utcnow()
 
@@ -37,8 +42,31 @@ def _set_state(task, state, message=None):
     task.events.append(event)
 
     db.save_task(task)
-
+    _send_state_email(task, state, message, email_addresses)
     return db.reload_task(task)
+
+
+def _send_state_email(task, state, message, email_addresses):
+
+    if not (email_addresses
+           and len(email_addresses) > 0
+           and state in (State.canceled, State.successful, State.failed)):
+        return
+
+    try:
+        subject = 'build {0} {1} {2} is {3}'.format(
+               task.git_repo,
+               task.branch,
+               task.tag,
+               state,
+               message)
+
+        send_email(email_addresses,
+                   subject,
+                   body=subject + '\r\n{0}'.format(message))
+
+    except Exception as ex:
+        print('{0}'.format(ex))
 
 
 def _run_build(git_repo, git_branch, git_tag, created_at):
@@ -63,30 +91,34 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
                  service_to_test,
                  notification_emails) = do_download_git_repo(task)
 
-                task = _set_state(task, State.building)
+                task = _set_state(task, State.building, email_addresses=notification_emails)
 
             elif task.status == State.building:
                 do_build_dockers(task, build_path, source_path, docker_compose_file)
                 if service_to_test:
-                    task = _set_state(task, State.testing)
+                    task = _set_state(task, State.testing, email_addresses=notification_emails)
                 else:
-                    task = _set_state(task, State.pushing)
+                    task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
             elif task.status == State.testing:
                 do_test_dockers(task, build_path, source_path, docker_compose_file, service_to_test)
-                task = _set_state(task, State.pushing)
+                task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
             elif task.status == State.pushing:
                 do_push_dockers(task, build_path, source_path, services_to_push)
-                task = _set_state(task, State.successful)
+                task = _set_state(task, State.successful, email_addresses=notification_emails)
 
             else:
-                task = _set_state(task, State.failed, 'unknown state {0}'.format(task.status))
+                task = _set_state(task,
+                                  State.failed,
+                                  'unknown state {0}'.format(task.status),
+                                  email_addresses=notification_emails)
 
     except KeyboardInterrupt as ex:
         _set_state(task,
                    state=State.canceled,
-                   message='build was canceled while {0}'.format(task.status))
+                   message='build was canceled while {0}'.format(task.status),
+                   email_addresses=notification_emails)
 
     except Exception as ex:
         if (task.status != State.successful
@@ -94,7 +126,8 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
            and task.status != State.canceled):
             _set_state(task,
                        state=State.failed,
-                       message='build failed while {0} with error: {1}'.format(task.status, ex))
+                       message='build failed while {0} with error: {1}'.format(task.status, ex),
+                       email_addresses=notification_emails)
         raise ex
 
     finally:
@@ -183,3 +216,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

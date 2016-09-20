@@ -1,7 +1,7 @@
 import os
 import yaml
 from os.path import expanduser
-from bob.worker.tools import mkdir_if_not_exist
+from bob.common.tools import mkdir_if_not_exist
 
 
 def load_settings():

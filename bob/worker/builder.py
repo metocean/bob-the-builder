@@ -9,7 +9,8 @@ from bob.worker.settings import load_settings, get_base_build_path
 from bob.worker.docker_client import get_recent_images
 from bob.worker.git_hub import download_release_source, download_branch_source
 from bob.worker.tools import base_dirname
-from bob.worker.tools import mkdir_p, execute, rename_basedir
+from bob.worker.tools import execute, rename_basedir
+from bob.common.tools import mkdir_p
 
 
 def _get_build_log(build_path):
@@ -174,16 +175,14 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
             execute('docker login -u {login} -p {password}'.format(login=settings['docker_hub']['login'],
                                                                    password=settings['docker_hub']['password']))
 
-        tag = task.git_tag if task.git_tag else 'latest'
-
         for local_image_name, docker_hub_image in images_to_push.items():
 
-            print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, tag))
+            print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, task.git_tag))
 
-            execute('docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, tag),
+            execute('docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, task.git_tag),
                     tag_log_path)
 
-            execute('docker push {0}:{1}'.format(docker_hub_image, tag),
+            execute('docker push {0}:{1}'.format(docker_hub_image, task.git_tag),
                     push_log_path)
     finally:
         _tail_log_to_task(task, tag_log_path)

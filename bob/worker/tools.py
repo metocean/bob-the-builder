@@ -1,26 +1,12 @@
-import errno
 import json
 import os
 import pycurl
 import subprocess
-
+import smtplib
+from email.mime.text import MIMEText
+from bob.worker.settings import load_settings
 from bob.common.exceptions import BobTheBuilderException
 
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
-def mkdir_if_not_exist(path):
-    if not os.path.exists(path):
-        mkdir_p(path)
-    return path
 
 
 def execute(cmd, logfile=None):
@@ -115,31 +101,37 @@ def base_dirname(dir_path):
         return os.path.split(dir_path)[1]
 
 
+def send_email(to_address, subject, body):
+    settings = load_settings()
+    if not (settings and 'email' in settings
+            and 'host' in settings['email']
+            and 'from' in settings['email']):
+        return
 
-# import smtplib
-# from email.mime.text import MIMEText
-# from bob.settings import get_email_settings
-#
-# def send_email(to_address, subject, body):
-#
-#     settings = get_email_settings()
-#     if not settings:
-#         return
-#
-#     server = smtplib.SMTP(settings['host'], settings['port'])
-#
-#     if 'debug' in settings:
-#         server.set_debuglevel(bool(settings['debug']))
-#
-#     if 'starttls' in settings and settings['starttls']:
-#         server.ehlo()
-#         server.starttls()
-#
-#     msg = MIMEText(body)
-#     msg['Subject'] = subject
-#     msg['From'] = settings['from']
-#     msg['To'] = ','.join(to_address)
-#
-#     server.login(settings['login'], settings['password'])
-#     server.sendmail(settings['from'], to_address, msg.as_string())
-#     server.quit()
+    host = settings['email']['host']
+    port = settings['email'].get('port', 25)
+    from_address = settings['email']['from']
+    debug = settings['email'].get('debug', False)
+    starttls = settings['email'].get('starttls', False)
+    login = settings['email'].get('login')
+    password = settings['email'].get('password')
+
+    server = smtplib.SMTP(host, port)
+
+    if debug:
+        server.set_debuglevel(debug)
+
+    if starttls:
+        server.ehlo()
+        server.starttls()
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = from_address
+    msg['To'] = ','.join(to_address)
+
+    if login and password:
+        server.login(login, password)
+
+    server.sendmail(from_address, to_address, msg.as_string())
+    server.quit()

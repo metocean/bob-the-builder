@@ -22,8 +22,8 @@ class Task(object):
                  git_tag='latest'):
 
         self.git_repo = git_repo
-        self.git_branch = git_branch
-        self.git_tag = git_tag
+        self.git_branch = git_branch if git_branch else 'master'
+        self.git_tag = git_tag if git_tag else 'latest'
         self.status = 'pending'
         self.status_message = 'task has been created and is pending'
         self.events = []
