@@ -83,7 +83,7 @@ def task_action(owner, repo, branch, tag, created_at):
 @webhook.hook(event_type='release')
 def github_webhook(data):
 
-    if not ('repository' in data and 'fullname' in data['repository']):
+    if not ('repository' in data and 'full_name' in data['repository']):
         return 'OK', 200
 
     if not ('action' in data and data['action'] == 'published'):
@@ -92,7 +92,7 @@ def github_webhook(data):
     if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
         return 'OK', 200
 
-    repo = data['repository']['fullname']
+    repo = data['repository']['full_name']
     branch = data['release']['target_commitish']
     tag = data['release']['tag_name']
 
