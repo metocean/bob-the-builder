@@ -3,3 +3,4 @@ pycurl
 docker-py
 docker-compose
 github_webhook
+gunicorn

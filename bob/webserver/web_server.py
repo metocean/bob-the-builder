@@ -1,10 +1,15 @@
 from github_webhook import Webhook
 from flask import Flask, render_template, request
-import bob.common.db as db
-from bob.webserver.basic_auth import requires_auth
+from gunicorn.app.base import BaseApplication
+from gunicorn.six import iteritems
+import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
 from bob.common.entities import State
+
+from bob.common import db
+from bob.common import queues
+from bob.common.entities import Task
 
 
 app = Flask(__name__)  # Standard Flask app
@@ -73,4 +78,51 @@ def task_action(owner, repo, branch, tag, created_at):
     return 'FAILED'
 
 
-app.run()
+@webhook.hook(event_type='release')
+def github_webhook(data):
+
+    if not ('repository' in data and 'fullname' in data['repository']):
+        return 'OK', 200
+
+    if not ('action' in data and data['action'] == 'published'):
+        return 'OK', 200
+
+    if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
+        return 'OK', 200
+
+    repo = data['repository']['fullname']
+    branch = data['release']['target_commitish']
+    tag = data['release']['tag_name']
+
+    task = Task(git_repo=repo, git_branch=branch, git_tag=tag)
+    db.db_save_task(task)
+    queues.enqueue_task(task)
+
+    print("Got push with: {0}".format(data))
+    return 'OK', 200
+
+
+class GunicornApplication(BaseApplication):
+
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super(GunicornApplication, self).__init__()
+
+    def load_config(self):
+        config = dict([(key, value) for key, value in iteritems(self.options)
+                       if key in self.cfg.settings and value is not None])
+        for key, value in iteritems(config):
+            self.cfg.set(key.lower(), value)
+
+    def load(self):
+        return self.application
+
+
+if __name__ == "__main__":
+    import os
+    options = {
+        'bind': '%s:%s' % ('0.0.0.0', os.environ.get('BOB-BUILDER-PORT', '8080')),
+        'workers': multiprocessing.cpu_count(),
+    }
+    GunicornApplication(app, options).run()
