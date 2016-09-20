@@ -1,8 +1,9 @@
 from datetime import datetime
 
 import boto3
+from boto3.dynamodb.conditions import Attr
 
-from bob.common.entities import Task
+from bob.common.entities import Task, State
 from bob.worker.aws_helpers import error_code_equals
 
 _task_table_name = 'bob-task'
@@ -109,3 +110,17 @@ def load_all_tasks(db=boto3.resource('dynamodb')):
     if 'Items' in response:
         for task in response['Items']:
             yield Task.from_dict(task)
+
+
+def tasks_ps(db=boto3.resource('dynamodb')):
+    table = db.Table(_task_table_name)
+    db_filter = (Attr('status').eq(State.pending)
+                 | Attr('status').eq(State.downloading)
+                 | Attr('status').eq(State.building)
+                 | Attr('status').eq(State.testing)
+                 | Attr('status').eq(State.pushing))
+    response = table.scan(FilterExpression=db_filter)
+    if 'Items' in response:
+        for task in response['Items']:
+            yield Task.from_dict(task)
+

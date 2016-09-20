@@ -1,9 +1,15 @@
 from functools import wraps
 from flask import request, Response
+from bob.webserver.settings import load_settings
+
+_settings = None
 
 
 def _check_auth(username, password):
-    return username == 'admin' and password == 'admin'
+    settings = load_settings()
+    if 'login' in settings and 'password' in settings:
+        return username == settings['login'] and password == settings['password']
+    return True
 
 
 def _authenticate():
