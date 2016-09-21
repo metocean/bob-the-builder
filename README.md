@@ -4,17 +4,22 @@ Builds / Test Docker Compose files in GIT HUB and the Pushes them to Docker Hub.
 ## install
 
 ### install client
+```
 pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-client.txt
 sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+```
 
 ### install webserver
+```
 pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-webserver.txt
 sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+```
 
 ### install worker
 sudo apt-get install python3-dev python3-pycurl git unzip
 pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-worker.txt
 sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+```
 
 ## config
 ### config worker
