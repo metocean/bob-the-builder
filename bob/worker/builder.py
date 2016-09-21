@@ -175,6 +175,14 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
             execute('docker login -u {login} -p {password}'.format(login=settings['docker_hub']['login'],
                                                                    password=settings['docker_hub']['password']))
 
+        if not task.git_branch or task.git_branch == 'master':
+            docker_hub_tag = task.git_tag
+        else:
+            if not task.git_tag or task.git_tag == 'latest':
+                docker_hub_tag = task.git_branch
+            else:
+                docker_hub_tag = '{0}-{1}'.format(task.git_branch, task.git_tag)
+
         for local_image_name, docker_hub_image in images_to_push.items():
 
             print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, task.git_tag))
