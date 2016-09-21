@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from bob.common import db
 from bob.common import queues
@@ -38,17 +40,21 @@ def cmd_build(args):
         _build(args[0], args[1], args[2])
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('cmd', action='store', help='ls, ps, build')
-parser.add_argument('args', action='store', nargs='*')
-args = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('cmd', action='store', help='ls, ps, build')
+    parser.add_argument('args', action='store', nargs='*')
+    args = parser.parse_args()
 
-if args.cmd == 'ls':
-    cmd_list(args.args)
+    if args.cmd == 'ls':
+        cmd_list(args.args)
 
-if args.cmd == 'ps':
-    cmd_ps(args.args)
+    if args.cmd == 'ps':
+        cmd_ps(args.args)
 
-if args.cmd == 'build':
-    cmd_build(args.args)
+    if args.cmd == 'build':
+        cmd_build(args.args)
 
+
+if __name__ == 'main':
+    main()
