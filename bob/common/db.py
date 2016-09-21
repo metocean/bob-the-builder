@@ -1,7 +1,7 @@
 from datetime import datetime
 
-import boto3
 from boto3.dynamodb.conditions import Attr
+from bob.common.aws import get_boto3_resource, get_boto3_session
 
 from bob.common.entities import Task, State
 from bob.worker.aws_helpers import error_code_equals
@@ -10,7 +10,7 @@ _task_table_name = 'bob-task'
 
 
 def _table_exists(table_name):
-    client = boto3.client('dynamodb')
+    client = get_boto3_session().client('dynamodb')
     try:
       print(client.describe_table(TableName=table_name))
       return True
@@ -20,7 +20,7 @@ def _table_exists(table_name):
         raise e
 
 
-def create_task_table(db=boto3.resource('dynamodb')):
+def create_task_table(db=get_boto3_resource('dynamodb')):
     """
     creates a new table if it does not exits, blocks until it does.
     :param db: boto3.resource('dynamodb')
@@ -60,7 +60,7 @@ def create_task_table(db=boto3.resource('dynamodb')):
     print('table {0} created'.format(_task_table_name))
 
 
-def save_task(task, db=boto3.resource('dynamodb')):
+def save_task(task, db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
 
     task.modified_at = datetime.utcnow()
@@ -76,7 +76,7 @@ def load_task(git_repo,
               git_branch,
               git_tag,
               created_at,
-              db=boto3.resource('dynamodb')):
+              db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.get_item(
         Key={
@@ -91,7 +91,7 @@ def load_task(git_repo,
     return None
 
 
-def reload_task(task, db=boto3.resource('dynamodb')):
+def reload_task(task, db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.get_item(
         Key={
@@ -104,7 +104,7 @@ def reload_task(task, db=boto3.resource('dynamodb')):
     return Task.from_dict(response['Item'])
 
 
-def load_all_tasks(db=boto3.resource('dynamodb')):
+def load_all_tasks(db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
     response = table.scan()
     if 'Items' in response:
@@ -112,7 +112,7 @@ def load_all_tasks(db=boto3.resource('dynamodb')):
             yield Task.from_dict(task)
 
 
-def tasks_ps(db=boto3.resource('dynamodb')):
+def tasks_ps(db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
     db_filter = (Attr('status').eq(State.pending)
                  | Attr('status').eq(State.downloading)

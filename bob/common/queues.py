@@ -1,7 +1,7 @@
 import json
 
-import boto3
 from botocore.exceptions import ClientError
+from bob.common.aws import get_boto3_resource
 
 from bob.worker.aws_helpers import error_code_equals
 
@@ -20,7 +20,7 @@ def _queue_exists(queue_name, sqs):
         raise err
 
 
-def _create_task_queue(sqs=boto3.resource('sqs')):
+def _create_task_queue(sqs=get_boto3_resource('sqs')):
     if _queue_exists(_task_queue_name, sqs=sqs):
         return
     sqs.create_queue(QueueName=_task_queue_name,
@@ -28,7 +28,7 @@ def _create_task_queue(sqs=boto3.resource('sqs')):
                                  'ReceiveMessageWaitTimeSeconds': '15'})
 
 
-def _create_task_cancel_queue(sqs=boto3.resource('sqs')):
+def _create_task_cancel_queue(sqs=get_boto3_resource('sqs')):
     if _queue_exists(_task_queue_name, sqs=sqs):
         return
     sqs.create_queue(QueueName=_task_queue_name,
@@ -36,16 +36,16 @@ def _create_task_cancel_queue(sqs=boto3.resource('sqs')):
                                  'ReceiveMessageWaitTimeSeconds': '15'})
 
 
-def enqueue_task(task, sqs=boto3.resource('sqs')):
+def enqueue_task(task, sqs=get_boto3_resource('sqs')):
     queue = sqs.get_queue_by_name(QueueName=_task_queue_name)
     queue.send_message(MessageBody=str(task))
 
 
-def get_task_queue(sqs=boto3.resource('sqs')):
+def get_task_queue(sqs=get_boto3_resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
 
 
-def enqueue_cancel(task, sqs=boto3.resource('sqs')):
+def enqueue_cancel(task, sqs=get_boto3_resource('sqs')):
 
     queue = sqs.get_queue_by_name(QueueName=_task_cancel_queue_name)
     queue.send_message(MessageBody=json.dumps(
@@ -55,8 +55,5 @@ def enqueue_cancel(task, sqs=boto3.resource('sqs')):
          'created_at': task.created_at}))
 
 
-def get_task_queue(sqs=boto3.resource('sqs')):
+def get_task_queue(sqs=get_boto3_resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
-
-
-
