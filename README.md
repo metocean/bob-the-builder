@@ -23,6 +23,16 @@ sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
 ```
 
 ## config
+### config AWS connection for SQS and DynamoDB
+```
+mkdir -p ${HOME}/.bob/
+touch ${HOME}/.aws/aws-settings.yml
+```
+```
+region: us-west-2
+aws_access_key_id: AKIAIOSFODNN7EXAMPLE
+aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
 ### config worker
 ```
 mkdir -p ${HOME}/.bob/
@@ -44,15 +54,4 @@ email:
   login: ******@metocean.co.nz
   password: ******
   from: *****@metocean.co.nz
-```
-
-### config AWS connection for SQS and DynamoDB
-```
-mkdir -p ${HOME}/.bob/
-touch ${HOME}/.aws/aws-settings.yml
-```
-```
-region: us-west-2
-aws_access_key_id: AKIAIOSFODNN7EXAMPLE
-aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
