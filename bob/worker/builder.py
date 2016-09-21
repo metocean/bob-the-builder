@@ -185,12 +185,12 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
         for local_image_name, docker_hub_image in images_to_push.items():
 
-            print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, task.git_tag))
+            print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, docker_hub_tag))
 
-            execute('docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, task.git_tag),
+            execute('docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, docker_hub_tag),
                     tag_log_path)
 
-            execute('docker push {0}:{1}'.format(docker_hub_image, task.git_tag),
+            execute('docker push {0}:{1}'.format(docker_hub_image, docker_hub_tag),
                     push_log_path)
     finally:
         _tail_log_to_task(task, tag_log_path)
