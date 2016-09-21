@@ -155,8 +155,11 @@ def _map_services_to_images(source_path, services_to_push):
         for repo_tag_name in image['RepoTags']:
             if repo_tag_name.startswith(src_dirname):
                 for service_name in services_to_push:
+                    repo_tag = repo_tag_name
+                    if ':' in repo_tag_name:
+                        repo_tag_name = repo_tag_name.rsplit(':')[0]
                     if repo_tag_name.endswith(service_name):
-                        images[repo_tag_name] = services_to_push[service_name]
+                        images[repo_tag] = services_to_push[service_name]
                 break
     return images
 
@@ -165,6 +168,9 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
     print('do_push_dockers')
 
     images_to_push = _map_services_to_images(source_path, services_to_push)
+    if not images_to_push and len(images_to_push) == 0:
+        raise BobTheBuilderException('Could not match any images to push to github:\r\n{0}',
+                                     services_to_push)
 
     tag_log_path = _get_tag_log(build_path)
     push_log_path = _get_push_log(build_path)

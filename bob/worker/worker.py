@@ -19,7 +19,8 @@ from bob.worker.builder import (do_download_git_repo,
                                 do_clean_up)
 
 from bob.worker.docker_client import (remove_all_docker_networks,
-                                      remove_all_docker_images)
+                                      remove_all_docker_images,
+                                      remove_dangling_docker_images)
 
 
 def _set_state(task,
@@ -169,7 +170,8 @@ def main():
     print('removing all docker networks')
     remove_all_docker_networks()
     print('removing all docker images')
-    remove_all_docker_images()
+    # remove_all_docker_images()
+    remove_dangling_docker_images()
 
     task_queue = queues.get_task_queue()
 
@@ -185,7 +187,8 @@ def main():
 
         # clean up old dockers sitting here before.
         remove_all_docker_networks()
-        remove_all_docker_images()
+        # remove_all_docker_images()
+        remove_dangling_docker_images()
 
         process = Process(target=_run_build, args=(
             task.git_repo,

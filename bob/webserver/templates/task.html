@@ -94,7 +94,7 @@ $(document).ready(function(){
             <div class="panel-heading">Logs:</div>
             {% for log in task.logs %}
             <table id="logs" class="table" cellspacing="0" width="100%">
-                <tr><th>Log</th><td style="text-align:right">{{log.filename}}</td></tr>
+                <tr><th colspan="2" >{{log.filename}}</th></tr>
             </table>
             <pre>{{ log['text'].value.decode('utf-8') if 'text' in log else '' }}</pre>
             {% endfor %}
