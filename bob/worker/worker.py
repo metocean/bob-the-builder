@@ -216,6 +216,9 @@ def main():
         if process and process.is_alive():
             _cancel_task(db.reload_task(task), process)
 
+        remove_all_docker_networks()
+        remove_all_docker_images()
+
 
 if __name__ == "__main__":
     main()
