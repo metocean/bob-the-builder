@@ -218,6 +218,7 @@ def main():
 
         remove_all_docker_networks()
         remove_all_docker_images()
+        # remove_dangling_docker_images()
 
 
 if __name__ == "__main__":
