@@ -98,7 +98,7 @@ def do_download_git_repo(task):
 
             docker_compose_file = build['docker_compose'].get('file', 'docker-compose.yml')
             services_to_push = build['docker_compose']['services_to_push']
-            service_to_test = build['docker_compose'].get('service_to_test')
+            test_service = build['docker_compose'].get('test_service')
             notification_emails = build.get('notification_emails', [])
 
     finally:
@@ -110,7 +110,7 @@ def do_download_git_repo(task):
             rename_basedir(source_path, created_at_str),
             docker_compose_file,
             services_to_push,
-            service_to_test,
+            test_service,
             notification_emails)
 
 

@@ -3,7 +3,7 @@ from time import time
 
 
 def get_recent_images(docker_client=docker.Client(),
-                      created_from_in_epoc=time()-12*60*60):
+                      created_from_in_epoc=time()-48*60*60):
     """
     returns images with:
      1) a Created time greater than or equal to created_from_in_epoc.

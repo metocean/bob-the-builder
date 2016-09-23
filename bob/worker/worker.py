@@ -89,20 +89,20 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
                  source_path,
                  docker_compose_file,
                  services_to_push,
-                 service_to_test,
+                 test_service,
                  notification_emails) = do_download_git_repo(task)
 
                 task = _set_state(task, State.building, email_addresses=notification_emails)
 
             elif task.status == State.building:
                 do_build_dockers(task, build_path, source_path, docker_compose_file)
-                if service_to_test:
+                if test_service:
                     task = _set_state(task, State.testing, email_addresses=notification_emails)
                 else:
                     task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
             elif task.status == State.testing:
-                do_test_dockers(task, build_path, source_path, docker_compose_file, service_to_test)
+                do_test_dockers(task, build_path, source_path, docker_compose_file, test_service)
                 task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
             elif task.status == State.pushing:
