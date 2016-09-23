@@ -20,7 +20,6 @@ class Task(object):
                  git_repo,
                  git_branch='master',
                  git_tag='latest'):
-
         self.git_repo = git_repo
         self.git_branch = git_branch if git_branch else 'master'
         self.git_tag = git_tag if git_tag else 'latest'
@@ -30,6 +29,8 @@ class Task(object):
         self.logs = []
         self.created_at = datetime.datetime.utcnow()
         self.modified_at = self.created_at
+        self.builder_ipaddress = None
+        self.builder_hostname = None
 
     def __repr__(self):
         return json.dumps(Task.to_dict(self), indent=2)
@@ -40,6 +41,16 @@ class Task(object):
     def get_status_message(self):
         if self.status_message:
             return self.status_message
+        return ''
+
+    def get_builder_hostname(self):
+        if self.builder_hostname:
+            return self.builder_hostname
+        return ''
+
+    def get_builder_ipaddress(self):
+        if self.builder_ipaddress:
+            return self.builder_ipaddress
         return ''
 
     def run_time(self):
@@ -62,6 +73,8 @@ class Task(object):
         task.logs = dict.get('logs', [])
         task.created_at = parse_date(dict['created_at'])
         task.modified_at = parse_date(dict['modified_at'])
+        task.builder_ipaddress = dict.get('builder_ipaddress', None)
+        task.builder_hostname = dict.get('builder_hostname', None)
         return task
 
     def to_dict(self):
@@ -70,7 +83,6 @@ class Task(object):
                 'git_branch': self.git_branch,
                 'git_tag': self.git_tag,
                 'status': self.status,
-
                 'created_at': self.created_at.isoformat(),
                 'modified_at': self.modified_at.isoformat()
             }
@@ -84,31 +96,10 @@ class Task(object):
         if self.logs:
             result['logs'] = self.logs
 
+        if self.builder_ipaddress:
+            result['builder_ipaddress'] = self.builder_ipaddress
+
+        if self.builder_hostname:
+            result['builder_hostname'] = self.builder_hostname
+
         return result
-#
-#
-# class Build(object):
-#     def __init__(self,
-#                  git_repo,
-#                  git_branch='master'):
-#         self.git_repo = git_repo
-#         self.git_branch = git_branch
-#
-#
-#     def __repr__(self):
-#         return json.dumps(Build.to_dict(self), indent=2)
-#
-#     @staticmethod
-#     def from_dict(dict):
-#         build = Build(
-#             git_repo=dict['git_repo'],
-#             git_branch=dict['git_branch'])
-#         return build
-#
-#     def to_dict(self):
-#         result = {
-#             'git_repo': self.git_repo,
-#             'git_branch': self.git_branch
-#         }
-#
-#         return result

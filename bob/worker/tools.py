@@ -6,7 +6,7 @@ import smtplib
 from email.mime.text import MIMEText
 from bob.worker.settings import load_settings
 from bob.common.exceptions import BobTheBuilderException
-
+import socket
 
 
 def execute(cmd, logfile=None):
@@ -135,3 +135,16 @@ def send_email(to_address, subject, body):
 
     server.sendmail(from_address, to_address, msg.as_string())
     server.quit()
+
+def get_ipaddress():
+    try:
+        return [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+    except:
+        return ''
+
+
+def get_hostname():
+    try:
+        return socket.gethostname()
+    except:
+        return ''

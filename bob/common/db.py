@@ -3,7 +3,7 @@ from datetime import datetime
 from boto3.dynamodb.conditions import Attr
 from bob.common.aws import get_boto3_resource, get_boto3_session
 
-from bob.common.entities import Task, State
+from bob.common.task import Task, State
 from bob.worker.aws_helpers import error_code_equals
 
 _task_table_name = 'bob-task'
@@ -123,4 +123,3 @@ def tasks_ps(db=get_boto3_resource('dynamodb')):
     if 'Items' in response:
         for task in response['Items']:
             yield Task.from_dict(task)
-

@@ -6,10 +6,9 @@ import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
 
-from bob.common.entities import State
+from bob.common.task import Task, State
 from bob.common import db
 from bob.common import queues
-from bob.common.entities import Task
 
 import os
 
@@ -124,7 +123,6 @@ class GunicornApplication(BaseApplication):
 def main():
     db.create_task_table()
     queues._create_task_queue()
-
     options = {
         'bind': '%s:%s' % ('0.0.0.0', os.environ.get('BOB-BUILDER-PORT', '8080')),
         'workers': multiprocessing.cpu_count(),

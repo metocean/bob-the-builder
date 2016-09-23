@@ -3,25 +3,31 @@
 import argparse
 from bob.common import db
 from bob.common import queues
-from bob.common.entities import Task
-
-
-def _list_tasks():
-    for task in db.load_all_tasks():
-        print ('{0}:{1} {2}  {3}  {4}'.format(task.git_repo,
-                                        task.git_branch,
-                                        task.git_tag,
-                                        task.status,
-                                        task.modified_at))
+from bob.common.task import Task
 
 
 def cmd_list(args):
-    _list_tasks()
+    format_str = '{status} - {repo} - {branch} - {tag} - {modified_at} - {builder_hostname}'
+    print(format_str)
+    for task in db.load_all_tasks():
+        print (format_str.format(repo=task.git_repo,
+                                 branch=task.git_branch,
+                                 tag=task.git_tag,
+                                 status=task.status,
+                                 modified_at=task.modified_at,
+                                 builder_hostname=task.get_builder_hostname()))
 
 
 def cmd_ps(args):
+    format_str = '{status} - {repo} - {branch} - {tag} - {modified_at} - {builder_hostname}'
+    print(format_str)
     for task in db.tasks_ps():
-        print (task)
+        print (format_str.format(repo=task.git_repo,
+                                 branch=task.git_branch,
+                                 tag=task.git_tag,
+                                 status=task.status,
+                                 modified_at=task.modified_at,
+                                 builder_hostname=task.get_builder_hostname()))
 
 
 def _build(repo, branch='master', tag=None):
@@ -40,6 +46,10 @@ def cmd_build(args):
         _build(args[0], args[1], args[2])
 
 
+def cmd_cancel(args):
+    print( 'TODO' )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', action='store', help='ls, ps, build')
@@ -55,6 +65,9 @@ def main():
     if args.cmd == 'build':
         cmd_build(args.args)
 
+    if args.cmd == 'cancel':
+        cmd_cancel(args.args)
+main()
 
 if __name__ == 'main':
     main()

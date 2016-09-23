@@ -3,3 +3,4 @@ pycurl
 docker-py
 docker-compose
 requests==2.7
+pyyaml
