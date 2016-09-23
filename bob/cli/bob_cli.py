@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+import pwd
 import argparse
 from bob.common import db
 from bob.common import queues
@@ -33,8 +35,15 @@ def cmd_ps(args):
         _print_task(task, format_str)
 
 
+def _get_username():
+    try:
+        return pwd.getpwuid(os.getuid())[0]
+    except:
+        return 'cli'
+
+
 def _build(repo, branch='master', tag=None):
-    task = Task(git_repo=repo, git_branch=branch, git_tag=tag)
+    task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=_get_username())
     db.save_task(task)
     queues.enqueue_task(task)
     print('done')

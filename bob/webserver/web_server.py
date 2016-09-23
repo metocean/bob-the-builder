@@ -94,8 +94,11 @@ def github_webhook(data):
     repo = data['repository']['full_name']
     branch = data['release']['target_commitish']
     tag = data['release']['tag_name']
+    created_by = 'github'
+    if 'author' in data['release'] and 'login' in data['release']['author']:
+        created_by += ' - {0}'.format(data['release']['author']['login'])
 
-    task = Task(git_repo=repo, git_branch=branch, git_tag=tag)
+    task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=created_by)
     db.save_task(task)
     queues.enqueue_task(task)
 
