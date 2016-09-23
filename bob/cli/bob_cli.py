@@ -56,7 +56,7 @@ def main():
     parser.add_argument('args', action='store', nargs='*')
     args = parser.parse_args()
 
-    if args.cmd == 'ls':
+    if args.cmd == 'ls' or args.cmd == 'list':
         cmd_list(args.args)
 
     if args.cmd == 'ps':
