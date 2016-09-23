@@ -26,7 +26,6 @@ def execute(cmd, logfile=None):
 
 
 def url_download(url, filepath, auth_username=None, auth_password=None):
-    status = None
     with open(filepath, 'wb') as f:
         curl = pycurl.Curl()
         curl.setopt(pycurl.URL, url)
@@ -42,8 +41,6 @@ def url_download(url, filepath, auth_username=None, auth_password=None):
 
 
 def url_get_utf8(url, auth_username=None, auth_password=None):
-    status = None
-    content = None
     try:
         # Python 3
         from io import BytesIO
@@ -135,6 +132,7 @@ def send_email(to_address, subject, body):
 
     server.sendmail(from_address, to_address, msg.as_string())
     server.quit()
+
 
 def get_ipaddress():
     try:

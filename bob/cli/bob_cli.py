@@ -43,10 +43,13 @@ def _get_username():
 
 
 def _build(repo, branch='master', tag=None):
-    task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=_get_username())
+    task = Task(git_repo=repo,
+                git_branch=branch,
+                git_tag=tag,
+                created_by=_get_username())
     db.save_task(task)
     queues.enqueue_task(task)
-    print('done')
+    print('ok')
 
 
 def cmd_build(args):
