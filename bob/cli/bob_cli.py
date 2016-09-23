@@ -6,28 +6,31 @@ from bob.common import queues
 from bob.common.task import Task
 
 
+def _print_task(task, format_str):
+    print(format_str.format(repo=task.git_repo,
+                            branch=task.git_branch,
+                            tag=task.git_tag,
+                            status=task.status,
+                            modified_at=task.modified_at,
+                            created_at=task.created_at,
+                            created_by=task.get_created_by(),
+                            builder_hostname=task.get_builder_hostname(),
+                            builder_ipaddress=task.get_builder_ipaddress(),
+                            run_time=task.run_time()))
+
+
 def cmd_list(args):
-    format_str = '{status} - {repo} - {branch} - {tag} - {modified_at} - {builder_hostname}'
+    format_str = '{status} - {repo} - {branch} - {tag} - {run_time} - {builder_hostname} - {created_by}'
     print(format_str)
     for task in db.load_all_tasks():
-        print (format_str.format(repo=task.git_repo,
-                                 branch=task.git_branch,
-                                 tag=task.git_tag,
-                                 status=task.status,
-                                 modified_at=task.modified_at,
-                                 builder_hostname=task.get_builder_hostname()))
+        _print_task(task, format_str)
 
 
 def cmd_ps(args):
-    format_str = '{status} - {repo} - {branch} - {tag} - {modified_at} - {builder_hostname}'
+    format_str = '{status} - {repo} - {branch} - {tag} - {run_time} - {builder_hostname} - {created_by}'
     print(format_str)
     for task in db.tasks_ps():
-        print (format_str.format(repo=task.git_repo,
-                                 branch=task.git_branch,
-                                 tag=task.git_tag,
-                                 status=task.status,
-                                 modified_at=task.modified_at,
-                                 builder_hostname=task.get_builder_hostname()))
+        _print_task(task, format_str)
 
 
 def _build(repo, branch='master', tag=None):
@@ -47,12 +50,12 @@ def cmd_build(args):
 
 
 def cmd_cancel(args):
-    print( 'TODO' )
+    print('TODO')
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('cmd', action='store', help='ls, ps, build')
+    parser.add_argument('cmd', action='store', help='build, cancel, ls, ps')
     parser.add_argument('args', action='store', nargs='*')
     args = parser.parse_args()
 
@@ -67,7 +70,7 @@ def main():
 
     if args.cmd == 'cancel':
         cmd_cancel(args.args)
-main()
+
 
 if __name__ == 'main':
     main()

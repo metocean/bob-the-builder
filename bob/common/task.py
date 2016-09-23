@@ -19,7 +19,9 @@ class Task(object):
     def __init__(self,
                  git_repo,
                  git_branch='master',
-                 git_tag='latest'):
+                 git_tag='latest',
+                 created_by=None,
+                 ):
         self.git_repo = git_repo
         self.git_branch = git_branch if git_branch else 'master'
         self.git_tag = git_tag if git_tag else 'latest'
@@ -28,6 +30,7 @@ class Task(object):
         self.events = []
         self.logs = []
         self.created_at = datetime.datetime.utcnow()
+        self.created_by = created_by
         self.modified_at = self.created_at
         self.builder_ipaddress = None
         self.builder_hostname = None
@@ -53,10 +56,17 @@ class Task(object):
             return self.builder_ipaddress
         return ''
 
+    def get_created_by(self):
+        if self.created_by:
+            return self.created_by
+        return ''
+
     def run_time(self):
         if self.is_done():
-            return self.modified_at - self.created_at
-        return datetime.datetime.utcnow() - self.created_at
+            td = self.modified_at - self.created_at
+        else:
+            td = datetime.datetime.utcnow() - self.created_at
+        return ':'.join(str(td).split(':')[:2])
 
     @staticmethod
     def from_json(text):
@@ -66,7 +76,8 @@ class Task(object):
     def from_dict(dict):
         task = Task(git_repo=dict['git_repo'],
                     git_branch=dict['git_branch'],
-                    git_tag=dict['git_tag'])
+                    git_tag=dict['git_tag'],
+                    created_by=dict.get('created_by', None))
         task.status = dict['status']
         task.status_message = dict.get('status_message')
         task.events = dict.get('events', [])
@@ -86,6 +97,9 @@ class Task(object):
                 'created_at': self.created_at.isoformat(),
                 'modified_at': self.modified_at.isoformat()
             }
+
+        if self.created_by:
+            result['created_by'] = self.created_by
 
         if self.status_message:
             result['status_message'] = self.status_message
