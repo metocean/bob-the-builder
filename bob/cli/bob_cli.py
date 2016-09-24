@@ -51,7 +51,7 @@ def _build(repo, branch='master', tag=None):
     queues.enqueue_task(task)
     print('ok')
 
-
+_build('metocean/gregc')
 def cmd_build(args):
     if len(args) == 1:
         _build(args[0])

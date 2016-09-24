@@ -25,6 +25,63 @@ def execute(cmd, logfile=None):
             raise BobTheBuilderException('"{0}" exited with {1}'.format(cmd, error_code))
 
 
+def tail(filename, num_of_lines=10, tail_cmd_timeout=15):
+    """
+    returns the tail of the given file.
+    :param filename: the filename / path you wish to return the tail of
+    :param num_of_lines: the number of lines you wish to tail.
+    :param tail_cmd_timeout: how long to wait before giving up on the tail request.
+    :return: returns None if the file tail Timeout.
+    """
+    try:
+        return subprocess.check_output(['tail',
+                                        '-{0}'.format(num_of_lines),
+                                        filename],
+                                       universal_newlines=True,
+                                       timeout=tail_cmd_timeout)
+    except subprocess.TimeoutExpired:
+        return None
+    except subprocess.CalledProcessError:
+        return None
+
+
+def execute_with_logging(cmd,
+                         log_filename,
+                         tail_callback,
+                         tail_callback_obj,
+                         num_of_lines=100,
+                         tail_interval=5):
+    """
+    executes the shell process with logging.
+    :param cmd: the shell command to execute
+    :param log_filename: the filename / path where you wish the log to be stored
+    :param tail_callback: this call back function is called with the tail for the given log file.
+    :param num_of_lines: the number of lines to tail in the log callback
+    :param tail_interval: the interval between tail_callback()s.
+    """
+    with open(log_filename, 'w') as log:
+        proc = subprocess.Popen(cmd,
+                                shell=True,
+                                universal_newlines=True,
+                                stdout=log,
+                                stderr=log)
+        while proc.returncode is None:
+            try:
+                proc.wait(tail_interval)
+            except subprocess.TimeoutExpired:
+                pass
+            lines = tail(log_filename, num_of_lines)
+            if tail_callback and lines:
+                tail_callback(lines, log_filename, tail_callback_obj)
+
+        if proc.returncode != 0:
+            raise Exception('"{cmd}" exited with {returncode} check logfile for details {log_filename}\r\n {lines}'.format(
+                cmd=cmd,
+                returncode=proc.returncode,
+                log_filename=log_filename,
+                lines=lines))
+
+
 def url_download(url, filepath, auth_username=None, auth_password=None):
     with open(filepath, 'wb') as f:
         curl = pycurl.Curl()

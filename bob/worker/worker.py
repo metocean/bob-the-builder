@@ -9,8 +9,9 @@ from bob.common.task import (State, Task)
 
 import bob.common.queues as queues
 import bob.common.db as db
-from bob.worker.tools import send_email, get_ipaddress
-
+from bob.worker.tools import (send_email,
+                              get_ipaddress,
+                              get_hostname)
 
 from bob.worker.builder import (do_download_git_repo,
                                 do_build_dockers,

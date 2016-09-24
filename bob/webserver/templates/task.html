@@ -96,7 +96,7 @@ $(document).ready(function(){
             <table id="logs" class="table" cellspacing="0" width="100%">
                 <tr><th colspan="2" >{{log.filename}}</th></tr>
             </table>
-            <pre>{{ log['text'].value.decode('utf-8') if 'text' in log else '' }}</pre>
+            <pre>{{ log['text'] if 'text' in log and log['text'] else '' }}</pre>
             {% endfor %}
         </div>
         <a href="/">BACK TO HOME</a>
