@@ -208,8 +208,7 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
 def do_clean_up(task, source_path, build_path, docker_compose_file):
     print('do_clean_up')
-
-    if not os.path.isdir(source_path):
+    if not os.path.exists(source_path):
         return
 
     os.chdir(source_path)

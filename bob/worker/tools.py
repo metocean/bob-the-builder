@@ -50,7 +50,8 @@ def execute_with_logging(cmd,
                          tail_callback,
                          tail_callback_obj,
                          num_of_lines=100,
-                         tail_interval=5):
+                         tail_interval=5,
+                         terminate_timeout=9):
     """
     executes the shell process with logging.
     :param cmd: the shell command to execute
@@ -65,21 +66,29 @@ def execute_with_logging(cmd,
                                 universal_newlines=True,
                                 stdout=log,
                                 stderr=log)
-        while proc.returncode is None:
-            try:
-                proc.wait(tail_interval)
-            except subprocess.TimeoutExpired:
-                pass
-            lines = tail(log_filename, num_of_lines)
-            if tail_callback and lines:
-                tail_callback(lines, log_filename, tail_callback_obj)
+        try:
+            while proc.returncode is None:
+                try:
+                    proc.wait(tail_interval)
+                except subprocess.TimeoutExpired:
+                    pass
+                lines = tail(log_filename, num_of_lines)
+                if tail_callback and lines:
+                    tail_callback(lines, log_filename, tail_callback_obj)
 
-        if proc.returncode != 0:
-            raise Exception('"{cmd}" exited with {returncode} check logfile for details {log_filename}\r\n {lines}'.format(
-                cmd=cmd,
-                returncode=proc.returncode,
-                log_filename=log_filename,
-                lines=lines))
+            if proc.returncode != 0:
+                raise Exception('"{cmd}" exited with {returncode} check logfile for details {log_filename}\r\n {lines}'.format(
+                    cmd=cmd,
+                    returncode=proc.returncode,
+                    log_filename=log_filename,
+                    lines=lines))
+        finally:
+            if proc.returncode is None:
+                proc.terminate()
+                try:
+                    proc.wait(terminate_timeout)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
 
 
 def url_download(url, filepath, auth_username=None, auth_password=None):
@@ -147,8 +156,6 @@ def rename_basedir(dir_path, new_basename):
 
 
 def base_dirname(dir_path):
-    # if not os.path.isdir(dir_path):
-    #     return None
     if dir_path.endswith('/'):
         return os.path.split(os.path.split(dir_path)[0])[1]
     else:

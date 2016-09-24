@@ -157,6 +157,8 @@ def _stop_process(process):
         print('killing pid:{0} it did not terminate timely like'.format(process.pid))
         os.kill(process.pid, signal.SIGKILL)
 
+    print('process pid:{0} {1}'.format(process.pid, 'failed to stop' if process.is_alive() else 'has stopped'))
+
 
 def _cancel_task(task, process):
     if (task.status != State.successful
@@ -166,7 +168,7 @@ def _cancel_task(task, process):
         _set_state(task, State.canceled, 'task was canceled')
 
 
-def main():
+def run():
     db.create_task_table()
     queues._create_task_queue()
 
@@ -177,7 +179,8 @@ def main():
 
     task_queue = queues.get_task_queue()
 
-    while task_queue:
+    terminate = False
+    while not terminate:
 
         messages = task_queue.receive_messages(MaxNumberOfMessages=1, WaitTimeSeconds=1)
         if not messages or len(messages) == 0:
@@ -212,13 +215,20 @@ def main():
                         _cancel_task(task, process)
 
         except KeyboardInterrupt:
-            pass
+            terminate = True
 
         if process and process.is_alive():
             _cancel_task(db.reload_task(task), process)
 
         remove_all_docker_networks()
         remove_all_docker_images()
+
+
+def main():
+    try:
+        run()
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
