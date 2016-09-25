@@ -16,7 +16,7 @@ import os
 
 
 def app_initialize():
-    app = Flask('bob-the-builder-webserver')
+    app = Flask(__name__)
     settings = load_settings()
 
     if settings and 'basic_auth' in settings:

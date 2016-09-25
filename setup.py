@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='bob',
@@ -7,12 +7,8 @@ setup(
     author='Greg Chalmers',
     author_email='ops@metocean.co.nz',
 
-    packages=['bob',
-              'bob.common',
-              'bob.cli',
-              'bob.worker',
-              'bob.webserver'],
-
+    packages=find_packages(),
+    
     package_data={'bob':
                   ['webserver/static/css/*.css',
                    'webserver/static/fonts/*.*',
