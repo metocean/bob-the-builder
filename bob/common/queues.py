@@ -20,7 +20,7 @@ def _queue_exists(queue_name, sqs):
         raise err
 
 
-def _create_task_queue(sqs=get_boto3_resource('sqs')):
+def create_task_queue(sqs=get_boto3_resource('sqs')):
     if _queue_exists(_task_queue_name, sqs=sqs):
         return
     sqs.create_queue(QueueName=_task_queue_name,

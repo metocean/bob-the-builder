@@ -27,21 +27,7 @@ def _set_state(task,
                state,
                message=None,
                email_addresses=[]):
-
-    now = datetime.utcnow()
-
-    event = {'new_state': state,
-             'old_state': task.status,
-             'created_at': now.isoformat(),
-             'time_diff': str(now - task.modified_at)}
-
-    if message:
-        event['new_state_message'] = message
-
-    task.status = state
-    task.status_message = message
-    task.events.append(event)
-
+    task.set_state(state)
     db.save_task(task)
     _send_state_email(task, state, message, email_addresses)
     return db.reload_task(task)
@@ -81,13 +67,13 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
     docker_compose_file = None
     notification_emails = None
     try:
-        while (task.status != State.failed
-              and task.status != State.successful):
+        while (task.state != State.failed
+              and task.state != State.successful):
 
-            if task.status == State.pending:
+            if task.state == State.pending:
                 task = _set_state(task, State.downloading)
 
-            elif task.status == State.downloading:
+            elif task.state == State.downloading:
                 (build_path,
                  source_path,
                  docker_compose_file,
@@ -97,40 +83,40 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
 
                 task = _set_state(task, State.building, email_addresses=notification_emails)
 
-            elif task.status == State.building:
+            elif task.state == State.building:
                 do_build_dockers(task, build_path, source_path, docker_compose_file)
                 if test_service:
                     task = _set_state(task, State.testing, email_addresses=notification_emails)
                 else:
                     task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
-            elif task.status == State.testing:
+            elif task.state == State.testing:
                 do_test_dockers(task, build_path, source_path, docker_compose_file, test_service)
                 task = _set_state(task, State.pushing, email_addresses=notification_emails)
 
-            elif task.status == State.pushing:
+            elif task.state == State.pushing:
                 do_push_dockers(task, build_path, source_path, services_to_push)
                 task = _set_state(task, State.successful, email_addresses=notification_emails)
 
             else:
                 task = _set_state(task,
                                   State.failed,
-                                  'unknown state {0}'.format(task.status),
+                                  'unknown state {0}'.format(task.state),
                                   email_addresses=notification_emails)
 
     except KeyboardInterrupt as ex:
         _set_state(task,
                    state=State.canceled,
-                   message='build was canceled while {0}'.format(task.status),
+                   message='build was canceled while {0}'.format(task.state),
                    email_addresses=notification_emails)
 
     except Exception as ex:
-        if (task.status != State.successful
-           and task.status != State.failed
-           and task.status != State.canceled):
+        if (task.state != State.successful
+           and task.state != State.failed
+           and task.state != State.canceled):
             _set_state(task,
                        state=State.failed,
-                       message='build failed while {0} with error: {1}'.format(task.status, ex),
+                       message='build failed while {0} with error: {1}'.format(task.state, ex),
                        email_addresses=notification_emails)
         raise ex
 
@@ -161,16 +147,16 @@ def _stop_process(process):
 
 
 def _cancel_task(task, process):
-    if (task.status != State.successful
-           and task.status != State.failed
-           and task.status != State.canceled):
+    if (task.state != State.successful
+           and task.state != State.failed
+           and task.state != State.canceled):
         _stop_process(process)
         _set_state(task, State.canceled, 'task was canceled')
 
 
 def run():
     db.create_task_table()
-    queues._create_task_queue()
+    queues.create_task_queue()
 
     print('removing all docker networks')
     remove_all_docker_networks()
@@ -211,7 +197,7 @@ def run():
 
                 if process.is_alive():
                     task = db.reload_task(task)
-                    if task.status == State.cancel:
+                    if task.state == State.cancel:
                         _cancel_task(task, process)
 
         except KeyboardInterrupt:

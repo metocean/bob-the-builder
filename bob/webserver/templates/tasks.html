@@ -24,12 +24,12 @@
 $(document).ready(function() {
 
     var tasksTable = $('#tasks').DataTable( {
-        order: [[ 6, "desc" ]]
+        order: [[ 5, "desc" ]]
     } );
 
     tasksTable.on('click', 'tr', function () {
         var data = tasksTable.row( this ).data();
-        window.location = '/task/' + data[0] + '/' + data[1] + '/' + data[2] + '/' + data[6]
+        window.location = '/task/' + data[0] + '/' + data[1] + '/' + data[2] + '/' + data[5]
     } );
 
     setInterval( function () {
@@ -46,11 +46,11 @@ $(document).ready(function() {
                     <th>Git Repo</th>
                     <th>Branch</th>
                     <th>Tag</th>
-                    <th>Status</th>
-                    <th>Status Message</th>
-                    <th>Modified At</th>
+                    <th>State</th>
+                    <th>State Message</th>
                     <th>Created At</th>
-                    <th>Run Time</th>
+                    <th>Duration</th>
+                    <th>Created By</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,11 +59,11 @@ $(document).ready(function() {
                     <td>{{ task.git_repo }}</td>
                     <td>{{ task.git_branch }}</td>
                     <td>{{ task.git_tag }}</td>
-                    <td>{{ task.status }}</td>
-                    <td>{{ task.get_status_message() }}</td>
-                    <td>{{ task.modified_at }}</td>
+                    <td>{{ task.state }}</td>
+                    <td>{{ task.get_state_message() }}</td>
                     <td>{{ task.created_at }}</td>
-                    <td>{{ task.run_time() }}</td>
+                    <td>{{ task.get_duration() }}</td>
+                    <td>{{ task.get_created_by() }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -12,24 +12,24 @@ def _print_task(task, format_str):
     print(format_str.format(repo=task.git_repo,
                             branch=task.git_branch,
                             tag=task.git_tag,
-                            status=task.status,
+                            state=task.state,
                             modified_at=task.modified_at,
                             created_at=task.created_at,
                             created_by=task.get_created_by(),
                             builder_hostname=task.get_builder_hostname(),
                             builder_ipaddress=task.get_builder_ipaddress(),
-                            run_time=task.run_time()))
+                            duration=task.get_duration()))
 
 
 def cmd_list(args):
-    format_str = '{status} - {repo} - {branch} - {tag} - {run_time} - {builder_hostname} - {created_by}'
+    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_hostname} - {created_by}'
     print(format_str)
     for task in db.load_all_tasks():
         _print_task(task, format_str)
 
 
 def cmd_ps(args):
-    format_str = '{status} - {repo} - {branch} - {tag} - {run_time} - {builder_hostname} - {created_by}'
+    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_hostname} - {created_by}'
     print(format_str)
     for task in db.tasks_ps():
         _print_task(task, format_str)
@@ -62,7 +62,7 @@ def cmd_build(args):
 
 
 def cmd_cancel(args):
-    print('TODO')
+    print('Currently not implemented, please use the web interface for the time being.')
 
 
 def main():

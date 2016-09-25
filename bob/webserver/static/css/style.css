@@ -1,4 +1,4 @@
-.status {
+.state {
     display: inline-block;
     max-width: 100%;
     padding: 3%;
@@ -6,19 +6,19 @@
     color: white;
     *border: 1px solid;
 }
-.status {
+.state {
     background-color: #777;
 }
-.status-success {
+.state-success {
     background-color: #5cb85c;
 }
-.status-pending {
+.state-pending {
     background-color: #5bc0de;
 }
-.status-building {
+.state-building {
     background-color: #f0ad4e;
 }
-.status-problem {
+.state-problem {
     background-color: #d9534f;
 }
 .main-div {

@@ -54,13 +54,16 @@ $(document).ready(function(){
             <table id="details" class="table" >
                 <tbody>
                     <tr><th>Git Repo</th><td>{{ task.git_repo }}</td>
-                        <th>Created At</th><td>{{ task.created_at.isoformat() }}</td></tr>
+                        <th>Created By</th><td>{{ task.get_created_by() }}</td></tr>
                     <tr><th>Git Branch</th><td>{{ task.git_branch }}</td>
-                        <th>Modified At</th><td>{{ task.modified_at.isoformat() }}</td></tr>
+                        <th>Created At</th><td>{{ task.created_at.isoformat() }}</td></tr>
                     <tr><th>Git Tag</th><td>{{ task.git_tag }}</td>
-                        <th>Run Time</th><td>{{ task.run_time() }}</td></tr>
-                    <tr><th>Status</th><td>{{ task.status }}</td>
-                        <th>Status Message</th><td>{{ task.get_status_message() }}</td></tr>
+                        <th>Duration</th><td>{{ task.get_duration() }}</td></tr>
+                    <tr><th>State</th><td>{{ task.state }}</td>
+                        <th>Build Server</th><td>{{ task.builder_hostname }}</td></tr>
+                    <th>State Message</th><td colspan="2">{{ task.get_state_message() }}</td>
+                        <th></th><td></td></tr>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -72,19 +75,19 @@ $(document).ready(function(){
             <table id="events" class="table" cellspacing="0" width="100%">
                 <thead>
                     <tr>
-                        <th>New State</th>
-                        <th>From State</th>
-                        <th>Created</th>
-                        <th>Time Diff</th>
+                        <th>State</th>
+                        <th>Duration</th>
+                        <th>Created At</th>
+                        <th>Finished At</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event in task.events %}
+                    {% for event in task.get_events() %}
                     <tr>
-                        <td>{{ event.new_state }}</td>
-                        <td>{{ event.old_state }}</td>
+                        <td>{{ event.state }}</td>
+                        <td>{{ event.duration }}</td>
                         <td>{{ event.created_at }}</td>
-                        <td>{{ event.time_diff }}</td>
+                        <td>{{ event.finished_at }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

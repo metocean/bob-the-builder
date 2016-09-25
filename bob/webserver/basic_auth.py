@@ -2,12 +2,10 @@ from functools import wraps
 from flask import request, Response
 from bob.webserver.settings import load_settings
 
-_settings = None
-
 
 def _check_auth(username, password):
     settings = load_settings()
-    if 'login' in settings and 'password' in settings:
+    if 'basic_auth' in settings and 'login' in settings and 'password' in settings:
         return username == settings['login'] and password == settings['password']
     return True
 

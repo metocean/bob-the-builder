@@ -1,20 +1,63 @@
 from github_webhook import Webhook
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from gunicorn.app.base import BaseApplication
 from gunicorn.six import iteritems
 import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
+from functools import wraps
 
 from bob.common.task import Task, State
 from bob.common import db
 from bob.common import queues
+from bob.webserver.settings import load_settings
 
 import os
 
 
-app = Flask(__name__)  # Standard Flask app
-webhook = Webhook(app)  # Defines '/postreceive' endpoint
+def app_initialize():
+    app = Flask('bob-the-builder-webserver')
+    settings = load_settings()
+
+    if settings and 'basic_auth' in settings:
+        app.config['login'] = settings['basic_auth']['login']
+        app.config['password'] = settings['basic_auth']['password']
+
+    endpoint = '/github_webhook'
+    secret = 'build123'
+    if settings and 'github_hook' in settings:
+        endpoint = settings['github_hook'].get('end_point', endpoint)
+        secret = settings['github_hook'].get('secret', secret)
+
+    return app, Webhook(app, endpoint=endpoint, secret=secret)
+
+
+app, webhook = app_initialize()
+
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == app.config['username'] and password == app.config['password']
+
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
+def requires_basic_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if 'username' in app.config and (not auth or not check_auth(auth.username, auth.password)):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
 
 
 @app.errorhandler(500)
@@ -40,11 +83,13 @@ def after_request(response):
 
 
 @app.route('/')
+@requires_basic_auth
 def tasks_view():
     return render_template('tasks.html', tasks=db.load_all_tasks())
 
 
 @app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['GET'])
+@requires_basic_auth
 def task_view(owner, repo, branch, tag, created_at):
 
     task = db.load_task(git_repo=owner + '/' + repo,
@@ -63,6 +108,7 @@ def task_view(owner, repo, branch, tag, created_at):
 
 
 @app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['POST'])
+@requires_basic_auth
 def task_action(owner, repo, branch, tag, created_at):
 
     if request.form['action'] == 'cancel':
@@ -71,7 +117,8 @@ def task_action(owner, repo, branch, tag, created_at):
                             git_tag=tag,
                             created_at=parse_date(created_at))
 
-        task.status = State.cancel
+        task.set_state(State.cancel)
+
         db.save_task(task)
 
         return 'CANCELED'
@@ -125,7 +172,8 @@ class GunicornApplication(BaseApplication):
 
 def main():
     db.create_task_table()
-    queues._create_task_queue()
+    queues.create_task_queue()
+
     options = {
         'bind': '%s:%s' % ('0.0.0.0', os.environ.get('BOB-BUILDER-PORT', '8080')),
         'workers': multiprocessing.cpu_count(),

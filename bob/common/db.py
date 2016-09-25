@@ -114,11 +114,11 @@ def load_all_tasks(db=get_boto3_resource('dynamodb')):
 
 def tasks_ps(db=get_boto3_resource('dynamodb')):
     table = db.Table(_task_table_name)
-    db_filter = (Attr('status').eq(State.pending)
-                 | Attr('status').eq(State.downloading)
-                 | Attr('status').eq(State.building)
-                 | Attr('status').eq(State.testing)
-                 | Attr('status').eq(State.pushing))
+    db_filter = (Attr('state').eq(State.pending)
+                 | Attr('state').eq(State.downloading)
+                 | Attr('state').eq(State.building)
+                 | Attr('state').eq(State.testing)
+                 | Attr('state').eq(State.pushing))
     response = table.scan(FilterExpression=db_filter)
     if 'Items' in response:
         for task in response['Items']:
