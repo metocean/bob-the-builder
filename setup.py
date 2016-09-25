@@ -16,7 +16,7 @@ setup(
                    'webserver/static/js/*.*',
                    'webserver/templates/*.*']},
 
-    install_requires=['boto3', 'pyyaml']
+    install_requires=['boto3', 'pyyaml'],
 
     entry_points={
         'console_scripts': ['bob=bob.cli.bob_cli:main'],
