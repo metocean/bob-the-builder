@@ -40,35 +40,45 @@ $(document).ready(function() {
 
 <body>
     <div class="main-div">
-        <table id="tasks" class="table" cellspacing="0" width="100%">
-            <thead>
-                <tr>
-                    <th>Git Repo</th>
-                    <th>Branch</th>
-                    <th>Tag</th>
-                    <th>State</th>
-                    <th>State Message</th>
-                    <th>Created At</th>
-                    <th>Duration</th>
-                    <th>Created By</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task in tasks %}
-                <tr>
-                    <td>{{ task.git_repo }}</td>
-                    <td>{{ task.git_branch }}</td>
-                    <td>{{ task.git_tag }}</td>
-                    <td>{{ task.state }}</td>
-                    <td>{{ task.get_state_message() }}</td>
-                    <td>{{ task.created_at }}</td>
-                    <td>{{ task.get_duration() }}</td>
-                    <td>{{ task.get_created_by() }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="panel panel-default">
+            <div class="panel-heading">Tasks:</div>
+            <table id="tasks" class="table" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <th>Git Repo</th>
+                        <th>Branch</th>
+                        <th>Tag</th>
+                        <th>State</th>
+                        <th>State Message</th>
+                        <th>Created At</th>
+                        <th>Duration</th>
+                        <th>Created By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.git_repo }}</td>
+                        <td>{{ task.git_branch }}</td>
+                        <td>{{ task.git_tag }}</td>
+                        <td>{{ task.state }}</td>
+                        <td>{{ task.get_state_message() }}</td>
+                        <td>{{ task.created_at }}</td>
+                        <td>{{ task.get_duration() }}</td>
+                        <td>{{ task.get_created_by() }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">New Build:</div>
+            <form method="post" style="margin-left: 3px; margin-top: 5px">
+                <label>github repo:</label><input name="repo" id="repo" type="text" style="margin-left: 3px;">
+                <input type="submit" value="Build" class="btn-warning" style="margin-left: 3px;">
+            </form>
+        </div>
     </div>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 </body>
-
 </html>

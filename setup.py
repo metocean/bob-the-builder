@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bob',
-    version='0.2.2',
+    version='0.3.0',
     description='A Docker Compose building tool',
     author='Greg Chalmers',
     author_email='ops@metocean.co.nz',

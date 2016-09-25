@@ -82,9 +82,13 @@ def after_request(response):
     return response
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @requires_basic_auth
 def tasks_view():
+    if request.method == 'POST' and 'repo' in request.form:
+        task = Task(git_repo=request.form['repo'], created_by='website')
+        db.save_task(task)
+        queues.enqueue_task(task)
     return render_template('tasks.html', tasks=db.load_all_tasks())
 
 
@@ -122,7 +126,6 @@ def task_action(owner, repo, branch, tag, created_at):
         db.save_task(task)
 
         return 'CANCELED'
-
     return 'FAILED'
 
 

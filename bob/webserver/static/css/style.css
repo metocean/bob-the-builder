@@ -29,3 +29,12 @@
     margin-right: auto;
     margin-left: auto;
 }
+.panel {
+    padding-top: 3px;
+    padding-right: 3px;
+    padding-left: 3px;
+    padding-bottom: 3px;
+}
+.panel-heading {
+    margin-bottom: 5px;
+}

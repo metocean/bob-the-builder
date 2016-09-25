@@ -5,7 +5,6 @@ Builds / Test Docker Compose files in GIT HUB and the Pushes them to Docker Hub.
 
 ### install client
 ```
-pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-client.txt
 sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
 ```
 
