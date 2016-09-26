@@ -1,4 +1,3 @@
-from github_webhook import Webhook
 from flask import Flask, render_template, request, Response, jsonify
 from gunicorn.app.base import BaseApplication
 from gunicorn.six import iteritems
@@ -6,7 +5,7 @@ import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
 from functools import wraps
-from bob.common.task import Task, State
+from bob.common.task import Task
 from bob.common import db
 from bob.common import queues
 from bob.webserver.settings import load_settings
