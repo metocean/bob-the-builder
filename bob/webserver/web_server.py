@@ -157,7 +157,7 @@ def github_payload():
         if 'author' in data['release'] and 'login' in data['release']['author']:
             created_by += ' - {0}'.format(data['release']['author']['login'])
 
-        _queue_build(repo=repo, branch=branch, tab=tag, created_by=created_by)
+        _queue_build(repo=repo, branch=branch, tag=tag, created_by=created_by)
 
     return jsonify({'msg': 'Ok'})
 
