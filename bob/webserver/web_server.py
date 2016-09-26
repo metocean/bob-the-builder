@@ -1,18 +1,28 @@
 from github_webhook import Webhook
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, Response, jsonify
 from gunicorn.app.base import BaseApplication
 from gunicorn.six import iteritems
 import multiprocessing
 import traceback
 from dateutil.parser import parse as parse_date
 from functools import wraps
-
 from bob.common.task import Task, State
 from bob.common import db
 from bob.common import queues
 from bob.webserver.settings import load_settings
-
+import hashlib
+import hmac
+import sys
 import os
+
+
+def _queue_build(repo, branch, tag, created_by):
+    task = Task(git_repo=repo,
+                git_branch=branch,
+                git_tag=tag,
+                created_by=created_by)
+    db.save_task(task)
+    queues.enqueue_task(task)
 
 
 def app_initialize():
@@ -86,9 +96,7 @@ def after_request(response):
 @requires_basic_auth
 def tasks_view():
     if request.method == 'POST' and 'repo' in request.form:
-        task = Task(git_repo=request.form['repo'], created_by='website')
-        db.save_task(task)
-        queues.enqueue_task(task)
+        _queue_build(repo=request.form['repo'], created_by='website')
     return render_template('tasks.html', tasks=db.load_all_tasks())
 
 
@@ -111,49 +119,85 @@ def task_view(owner, repo, branch, tag, created_at):
                            cancel_disabled=cancel_disabled)
 
 
-@app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['POST'])
-@requires_basic_auth
-def task_action(owner, repo, branch, tag, created_at):
+# @webhook.hook(event_type='release')
+# def github_webhook(data):
+#
+#     if not ('repository' in data and 'full_name' in data['repository']):
+#         return 'OK', 200
+#
+#     if not ('action' in data and data['action'] == 'published'):
+#         return 'OK', 200
+#
+#     if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
+#         return 'OK', 200
+#
+#     repo = data['repository']['full_name']
+#     branch = data['release']['target_commitish']
+#     tag = data['release']['tag_name']
+#     created_by = 'github'
+#     if 'author' in data['release'] and 'login' in data['release']['author']:
+#         created_by += ' - {0}'.format(data['release']['author']['login'])
+#
+#     task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=created_by)
+#     db.save_task(task)
+#     queues.enqueue_task(task)
+#
+#     print("Got push with: {0}".format(data))
+#     return 'OK', 200
 
-    if request.form['action'] == 'cancel':
-        task = db.load_task(git_repo=owner + '/' + repo,
-                            git_branch=branch,
-                            git_tag=tag,
-                            created_at=parse_date(created_at))
 
-        task.set_state(State.cancel)
-
-        db.save_task(task)
-
-        return 'CANCELED'
-    return 'FAILED'
+def _verify_hmac_hash(data, signature, secret):
+    if sys.version_info[0] != 2 and isinstance(secret, str):
+        secret = bytearray(secret, 'utf-8')
+    mac = hmac.new(secret, msg=data, digestmod=hashlib.sha1)
+    return hmac.compare_digest('sha1=' + mac.hexdigest(), signature)
 
 
-@webhook.hook(event_type='release')
-def github_webhook(data):
+@app.route("/github_webhook", methods=['POST'])
+def github_payload():
+    # delivery = request.headers.get('X-GitHub-Delivery')
+    event_type = request.headers.get('X-GitHub-Event')
+    signature = request.headers.get('X-Hub-Signature')
+    secret = app.config.get('secret')
 
-    if not ('repository' in data and 'full_name' in data['repository']):
-        return 'OK', 200
+    if request.data is None:
+        return jsonify(msg='post data is missing'), 400
 
-    if not ('action' in data and data['action'] == 'published'):
-        return 'OK', 200
+    if secret:
+        if signature is None:
+            return jsonify(msg='Unauthorized, X-Hub-Signature was not found in headers'), 401
 
-    if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
-        return 'OK', 200
+        elif not _verify_hmac_hash(request.data, signature, bytes(secret, 'UTF-8')):
+            return jsonify(msg='Unauthorized, X-Hub-Signature did not match secret'), 401
 
-    repo = data['repository']['full_name']
-    branch = data['release']['target_commitish']
-    tag = data['release']['tag_name']
-    created_by = 'github'
-    if 'author' in data['release'] and 'login' in data['release']['author']:
-        created_by += ' - {0}'.format(data['release']['author']['login'])
+    if event_type is None:
+        return jsonify(msg='X-GitHub-Event was missing'), 400
 
-    task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=created_by)
-    db.save_task(task)
-    queues.enqueue_task(task)
+    event_type = event_type.lower()
 
-    print("Got push with: {0}".format(data))
-    return 'OK', 200
+    if event_type == "release":
+        data = request.get_json()
+
+        if not ('repository' in data and 'full_name' in data['repository']):
+            return jsonify({'msg': 'Ok'})
+
+        if not ('action' in data and data['action'] == 'published'):
+            return jsonify({'msg': 'Ok'})
+
+        if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
+            return jsonify({'msg': 'Ok'})
+
+        repo = data['repository']['full_name']
+        branch = data['release']['target_commitish']
+        tag = data['release']['tag_name']
+
+        created_by = 'github'
+        if 'author' in data['release'] and 'login' in data['release']['author']:
+            created_by += ' - {0}'.format(data['release']['author']['login'])
+
+        _queue_build(repo=repo, branch=branch, tab=tag, created_by=created_by)
+
+    return jsonify({'msg': 'Ok'})
 
 
 class GunicornApplication(BaseApplication):
