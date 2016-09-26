@@ -4,12 +4,13 @@ from multiprocessing import Process
 from time import sleep
 
 from bob.common.task import (State, Task)
-
+from bob.common.exceptions import BobTheBuilderException
 import bob.common.queues as queues
 import bob.common.db as db
 from bob.worker.tools import (send_email,
                               get_ipaddress,
-                              get_hostname)
+                              get_hostname,
+                              tail)
 
 from bob.worker.builder import (do_download_git_repo,
                                 do_build_dockers,
@@ -20,12 +21,18 @@ from bob.worker.builder import (do_download_git_repo,
 from bob.worker.docker_client import (remove_all_docker_networks,
                                       remove_all_docker_images)
 
+from bob.worker.settings import get_base_build_path
+from bob.common.tools import mkdir_p
+from shutil import rmtree
+from datetime import datetime
+import traceback
+
 
 def _set_state(task,
                state,
                message=None,
                email_addresses=[]):
-    task.set_state(state)
+    task.set_state(state=state, message=message)
     db.save_task(task)
     _send_state_email(task, state, message, email_addresses)
     return db.reload_task(task)
@@ -54,13 +61,52 @@ def _send_state_email(task, state, message, email_addresses):
         print('{0}'.format(ex))
 
 
+def _handle_exception(task, build_path, email_addresses, ex):
+
+    traceback.print_exc()
+    ex_type = ex.__class__.__name__
+    ex_str = str(ex)
+
+    _set_state(task,
+               state=State.failed,
+               message='build failed while {0} with error: {1}: {2}'.format(task.state, ex_type, ex_str),
+               email_addresses=email_addresses)
+
+    if isinstance(ex, BobTheBuilderException):
+        return
+
+    log_path = os.path.join(build_path, 'error.log')
+    with open(log_path, 'w') as f:
+        f.write(datetime.utcnow().isoformat() + '\n')
+        traceback.print_exc(file=f)
+
+    text = tail(filename=log_path)
+    if text and len(text) > 0:
+        task.save_log(text, log_path, insert_first=True)
+        db.save_task(task)
+
+
 def _run_build(git_repo, git_branch, git_tag, created_at):
 
     task = db.load_task(git_repo, git_branch, git_tag, created_at)
     task.builder_ipaddress = get_ipaddress()
     task.builder_hostname = get_hostname()
 
-    build_path = None
+    # note there are no spearates in the time string beacause its used for matching up
+    # build image names in do_docker_push(), DONOT change this format! hackie i know :P
+    created_at_str = task.created_at.strftime("%Y%m%d%H%M%S%f")
+
+    build_path = '{base_build_path}/{git_repo}/{git_branch}/{git_tag}/{created_at}'.format(
+        base_build_path=get_base_build_path(),
+        git_repo=task.git_repo,
+        git_branch=task.git_branch,
+        git_tag=task.git_tag,
+        created_at=created_at_str)
+
+    if os.path.exists(build_path):
+        rmtree(build_path)
+    mkdir_p(build_path)
+
     source_path = None
     docker_compose_file = None
     notification_emails = None
@@ -72,12 +118,11 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
                 task = _set_state(task, State.downloading)
 
             elif task.state == State.downloading:
-                (build_path,
-                 source_path,
+                (source_path,
                  docker_compose_file,
                  services_to_push,
                  test_service,
-                 notification_emails) = do_download_git_repo(task)
+                 notification_emails) = do_download_git_repo(task, build_path, created_at_str)
 
                 task = _set_state(task, State.building, email_addresses=notification_emails)
 
@@ -109,14 +154,10 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
                    email_addresses=notification_emails)
 
     except Exception as ex:
-        if (task.state != State.successful
-           and task.state != State.failed
-           and task.state != State.canceled):
-            _set_state(task,
-                       state=State.failed,
-                       message='build failed while {0} with error: {1}'.format(task.state, ex),
-                       email_addresses=notification_emails)
-        raise ex
+        _handle_exception(task,
+                          build_path=build_path,
+                          email_addresses=notification_emails,
+                          ex=ex)
 
     finally:
         do_clean_up(task, source_path, build_path, docker_compose_file)

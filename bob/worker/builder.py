@@ -1,13 +1,11 @@
 import yaml
 import os
-from datetime import datetime
 from shutil import rmtree
 
 from bob.common.exceptions import BobTheBuilderException
-from bob.worker.settings import load_settings, get_base_build_path
+from bob.worker.settings import load_settings
 from bob.worker.docker_client import get_recent_images
 from bob.worker.git_hub import download_release_source, download_branch_source
-from bob.common.tools import mkdir_p
 from bob.worker.tools import (execute,
                               execute_with_logging,
                               rename_basedir,
@@ -46,48 +44,14 @@ def _get_git_release_log(build_path):
 def _save_log_to_task(text, log_path, task):
     if not text or len(text) == 0:
         return
-
     if task is None:
         return
-
-    filename = os.path.basename(log_path)
-
-    entry = {'filename': filename,
-             'path:': log_path,
-             'text': text,
-             'created_at': datetime.utcnow().isoformat()}
-
-    index = -1
-    for i, entree in enumerate(task.logs):
-        if entree['filename'] == filename:
-            index = i
-            break
-
-    if index < 0:
-        task.logs.append(entry)
-    else:
-        task.logs[index] = entry
-
+    task.save_log(text, log_path)
     db.save_task(task)
 
 
-def do_download_git_repo(task):
+def do_download_git_repo(task, build_path, created_at_str):
     print('do_download_git_repo')
-
-    # note there are no spearates in the time string beacause its used for matching up
-    # build image names in do_docker_push(), DONOT change this format! hackie i know :P
-    created_at_str = task.created_at.strftime("%Y%m%d%H%M%S%f")
-
-    build_path = '{base_build_path}/{git_repo}/{git_branch}/{git_tag}/{created_at}'.format(
-        base_build_path=get_base_build_path(),
-        git_repo=task.git_repo,
-        git_branch=task.git_branch,
-        git_tag=task.git_tag,
-        created_at=created_at_str)
-
-    if os.path.exists(build_path):
-        rmtree(build_path)
-    mkdir_p(build_path)
 
     settings = load_settings()
 
@@ -118,8 +82,7 @@ def do_download_git_repo(task):
         test_service = build['docker_compose'].get('test_service')
         notification_emails = build.get('notification_emails', [])
 
-    return (build_path,
-            rename_basedir(source_path, created_at_str),
+    return (rename_basedir(source_path, created_at_str),
             docker_compose_file,
             services_to_push,
             test_service,
@@ -208,7 +171,7 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
 def do_clean_up(task, source_path, build_path, docker_compose_file):
     print('do_clean_up')
-    if not os.path.exists(source_path):
+    if not source_path or not os.path.exists(source_path):
         return
 
     os.chdir(source_path)

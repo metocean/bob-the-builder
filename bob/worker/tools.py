@@ -25,7 +25,7 @@ def execute(cmd, logfile=None):
             raise BobTheBuilderException('"{0}" exited with {1}'.format(cmd, error_code))
 
 
-def tail(filename, num_of_lines=10, tail_cmd_timeout=15):
+def tail(filename, num_of_lines=100, tail_cmd_timeout=15):
     """
     returns the tail of the given file.
     :param filename: the filename / path you wish to return the tail of

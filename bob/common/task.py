@@ -162,3 +162,30 @@ class Task(object):
             result['builder_hostname'] = self.builder_hostname
 
         return result
+
+    def save_log(self, text, log_path, insert_first=False):
+        import os
+        if not text or len(text) == 0:
+            return
+
+        filename = os.path.basename(log_path)
+
+        entry = {'filename': filename,
+                 'path:': log_path,
+                 'text': text,
+                 'created_at': datetime.datetime.utcnow().isoformat()}
+
+        index = -1
+        for i, entree in enumerate(self.logs):
+            if entree['filename'] == filename:
+                index = i
+                break
+
+        if index < 0:
+            if insert_first:
+                self.logs.insert(0, entry)
+            else:
+                self.logs.append(entry)
+        else:
+            self.logs[index] = entry
+
