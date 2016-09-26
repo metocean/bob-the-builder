@@ -33,6 +33,9 @@ $(document).ready(function() {
         window.location = '/task/' + data[0] + '/' + data[1] + '/' + data[2] + '/' + data[5]
     } );
 
+    var d = new Date();
+    document.getElementById("time").innerHTML = d.toUTCString();
+
     setInterval( function () {
         var d = new Date();
         document.getElementById("time").innerHTML = d.toUTCString();

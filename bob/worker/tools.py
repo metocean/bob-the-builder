@@ -5,8 +5,8 @@ import subprocess
 import smtplib
 from email.mime.text import MIMEText
 from bob.worker.settings import load_settings
-from bob.common.exceptions import BobTheBuilderException
 import socket
+from bob.common.exceptions import BobTheBuilderException
 
 
 def execute(cmd, logfile=None):
@@ -77,7 +77,7 @@ def execute_with_logging(cmd,
                     tail_callback(lines, log_filename, tail_callback_obj)
 
             if proc.returncode != 0:
-                raise Exception('"{cmd}" exited with {returncode} check logfile for details {log_filename}\r\n {lines}'.format(
+                raise BobTheBuilderException('"{cmd}" exited with {returncode} check logfile for details {log_filename}\r\n {lines}'.format(
                     cmd=cmd,
                     returncode=proc.returncode,
                     log_filename=log_filename,

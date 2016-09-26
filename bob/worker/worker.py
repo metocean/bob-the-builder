@@ -72,9 +72,6 @@ def _handle_exception(task, build_path, email_addresses, ex):
                message='build failed while {0} with error: {1}: {2}'.format(task.state, ex_type, ex_str),
                email_addresses=email_addresses)
 
-    if isinstance(ex, BobTheBuilderException):
-        return
-
     log_path = os.path.join(build_path, 'error.log')
     with open(log_path, 'w') as f:
         f.write(datetime.utcnow().isoformat() + '\n')

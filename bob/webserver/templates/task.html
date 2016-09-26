@@ -42,6 +42,9 @@ $(document).ready(function(){
         });
     });
 
+    var d = new Date();
+    document.getElementById("time").innerHTML = d.toUTCString();
+
     setInterval( function () {
         var d = new Date();
         document.getElementById("time").innerHTML = d.toUTCString();
