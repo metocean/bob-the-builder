@@ -39,7 +39,7 @@ def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == app.config['username'] and password == app.config['password']
+    return username == app.config['login'] and password == app.config['password']
 
 
 def authenticate():
@@ -54,7 +54,7 @@ def requires_basic_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if 'username' in app.config and (not auth or not check_auth(auth.username, auth.password)):
+        if 'login' in app.config and (not auth or not check_auth(auth.username, auth.password)):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
