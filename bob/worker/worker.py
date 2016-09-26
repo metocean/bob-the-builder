@@ -65,7 +65,11 @@ def _handle_exception(task, build_path, email_addresses, ex):
 
     traceback.print_exc()
     ex_type = ex.__class__.__name__
-    ex_str = str(ex)
+
+    if hasattr(ex, 'args') and ex.args and len(ex.args) > 0:
+        ex_str = str(ex.args[0])
+    else:
+        ex_str = str(ex)
 
     _set_state(task,
                state=State.failed,
@@ -76,6 +80,9 @@ def _handle_exception(task, build_path, email_addresses, ex):
     with open(log_path, 'w') as f:
         f.write(datetime.utcnow().isoformat() + '\n')
         traceback.print_exc(file=f)
+
+    if isinstance(ex, BobTheBuilderException):
+        return
 
     text = tail(filename=log_path)
     if text and len(text) > 0:
