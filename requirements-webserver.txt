@@ -1,4 +1,3 @@
 boto3
-github_webhook
 gunicorn
 pyyaml

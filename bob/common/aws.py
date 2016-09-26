@@ -1,11 +1,11 @@
 import os
 import yaml
-from os.path import expanduser
+from bob.common.settings import find_settings_file
 import boto3
 
 
 def _load_settings():
-    file_path = os.path.join(expanduser("~"), '.bob/aws-settings.yml')
+    file_path = find_settings_file('aws-settings.yml')
     if not os.path.isfile(file_path):
         return None
     with open(file_path, 'r') as f:

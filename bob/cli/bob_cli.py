@@ -26,7 +26,7 @@ def cmd_list(args):
     print(format_str)
     for task in db.load_all_tasks():
         _print_task(task, format_str)
-
+cmd_list(None)
 
 def cmd_ps(args):
     format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_hostname} - {created_by}'
