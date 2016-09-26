@@ -16,6 +16,17 @@ import sys
 import os
 
 
+app = Flask(__name__)
+settings = load_settings()
+
+if settings and 'basic_auth' in settings:
+    app.config['login'] = settings['basic_auth']['login']
+    app.config['password'] = settings['basic_auth']['password']
+
+if settings and 'github_hook' in settings:
+    app.config['secret'] = settings['github_hook'].get('secret')
+
+
 def _queue_build(repo, branch, tag, created_by):
     task = Task(git_repo=repo,
                 git_branch=branch,
@@ -23,26 +34,6 @@ def _queue_build(repo, branch, tag, created_by):
                 created_by=created_by)
     db.save_task(task)
     queues.enqueue_task(task)
-
-
-def app_initialize():
-    app = Flask(__name__)
-    settings = load_settings()
-
-    if settings and 'basic_auth' in settings:
-        app.config['login'] = settings['basic_auth']['login']
-        app.config['password'] = settings['basic_auth']['password']
-
-    endpoint = '/github_webhook'
-    secret = 'build123'
-    if settings and 'github_hook' in settings:
-        endpoint = settings['github_hook'].get('end_point', endpoint)
-        secret = settings['github_hook'].get('secret', secret)
-
-    return app, Webhook(app, endpoint=endpoint, secret=secret)
-
-
-app, webhook = app_initialize()
 
 
 def check_auth(username, password):
@@ -119,33 +110,6 @@ def task_view(owner, repo, branch, tag, created_at):
                            cancel_disabled=cancel_disabled)
 
 
-# @webhook.hook(event_type='release')
-# def github_webhook(data):
-#
-#     if not ('repository' in data and 'full_name' in data['repository']):
-#         return 'OK', 200
-#
-#     if not ('action' in data and data['action'] == 'published'):
-#         return 'OK', 200
-#
-#     if not ('release' in data and 'tag_name' in data['release'] and 'target_commitish' in data['release']):
-#         return 'OK', 200
-#
-#     repo = data['repository']['full_name']
-#     branch = data['release']['target_commitish']
-#     tag = data['release']['tag_name']
-#     created_by = 'github'
-#     if 'author' in data['release'] and 'login' in data['release']['author']:
-#         created_by += ' - {0}'.format(data['release']['author']['login'])
-#
-#     task = Task(git_repo=repo, git_branch=branch, git_tag=tag, created_by=created_by)
-#     db.save_task(task)
-#     queues.enqueue_task(task)
-#
-#     print("Got push with: {0}".format(data))
-#     return 'OK', 200
-
-
 def _verify_hmac_hash(data, signature, secret):
     if sys.version_info[0] != 2 and isinstance(secret, str):
         secret = bytearray(secret, 'utf-8')
@@ -173,9 +137,7 @@ def github_payload():
     if event_type is None:
         return jsonify(msg='X-GitHub-Event was missing'), 400
 
-    event_type = event_type.lower()
-
-    if event_type == "release":
+    if event_type.lower() == "release":
         data = request.get_json()
 
         if not ('repository' in data and 'full_name' in data['repository']):
