@@ -41,6 +41,12 @@ $(document).ready(function(){
             location.reload();
         });
     });
+
+    setInterval( function () {
+        var d = new Date();
+        document.getElementById("time").innerHTML = d.toUTCString();
+    }, 500 );
+
     setInterval( function () {
         location.reload();
     }, 60000 );
@@ -50,6 +56,7 @@ $(document).ready(function(){
 <body>
     <div class="main-div">
         <a href="/">BACK TO HOME</a>
+        <div id="time" class="panel panel-default" align="center"></div>
         <div class="panel panel-default">
             <div class="panel-heading">Details:</div>
             <table id="details" class="table" >
