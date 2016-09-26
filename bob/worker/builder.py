@@ -46,7 +46,7 @@ def _save_log_to_task(text, log_path, task):
         return
     if task is None:
         return
-    task.save_log(text, log_path)
+    task.save_log(text, log_path, insert_first=True)
     db.save_task(task)
 
 
