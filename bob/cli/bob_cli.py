@@ -6,6 +6,33 @@ import argparse
 from bob.common import db
 from bob.common import queues
 from bob.common.task import Task
+from subprocess import check_output
+
+
+def _get_repo():
+    """
+    finds the git repo name if the user's current directory is a git repo
+    """
+    try:
+        output = check_output('git config --get remote.origin.url', shell=True)
+        if not output:
+            return None
+        output = output.decode("utf-8").replace('\r\n', '').replace('\n', '')
+        repo = output
+        if 'git@' in repo:
+            repo = repo[repo.find(':')+1:]
+        elif repo.startswith('https://'):
+            repo = repo.replace('https://', '')
+            if '/' not in repo:
+                return None
+            repo = repo[repo.find('/')+1:]
+        else:
+            raise NotImplementedError('cannot understand repo: {0}'.format(output))
+        if repo.endswith('.git'):
+            repo = repo[0:repo.rindex('.git')]
+        return repo.lower()
+    except Exception:
+        return None
 
 
 def _print_task(task, format_str):
@@ -42,23 +69,39 @@ def _get_username():
         return 'cli'
 
 
-def _build(repo, branch='master', tag=None):
+def _build(repo=None, branch='master', tag=None):
+    if not repo:
+        repo = _get_repo()
+    if not repo:
+        print('failed: are you in a git repo?')
+        return
+    
     task = Task(git_repo=repo,
                 git_branch=branch,
                 git_tag=tag,
                 created_by=_get_username())
     db.save_task(task)
     queues.enqueue_task(task)
-    print('ok')
+
+    msg = 'ok - building: ' + repo
+    if branch:
+        msg += ' - ' + branch
+    if tag:
+        msg += ' - ' + tag
+    print(msg)
 
 
 def cmd_build(args):
-    if len(args) == 1:
+    if len(args) == 0:
+        _build()
+    elif len(args) == 1:
         _build(args[0])
     elif len(args) == 2:
         _build(args[0], args[1])
     elif len(args) == 3:
         _build(args[0], args[1], args[2])
+    else:
+        print('failed')
 
 
 def cmd_cancel(args):
