@@ -17,7 +17,7 @@ def _get_repo():
         output = check_output('git config --get remote.origin.url', shell=True)
         if not output:
             return None
-        output = output.decode("utf-8").replace('\r\n', '').replace('\n', '')
+        output = output.decode("utf-8").strip().replace('\r\n', '').replace('\n', '')
         repo = output
         if 'git@' in repo:
             repo = repo[repo.find(':')+1:]
@@ -33,6 +33,19 @@ def _get_repo():
         return repo.lower()
     except Exception:
         return None
+
+
+def _get_branch(default='master'):
+    """
+    finds the git repo name if the user's current directory is a git repo
+    """
+    try:
+        output = check_output('git rev-parse --abbrev-ref HEAD', shell=True)
+        if not output:
+            return default
+        return output.decode("utf-8").strip()
+    except Exception:
+        return default
 
 
 def _print_task(task, format_str):
@@ -69,13 +82,11 @@ def _get_username():
         return 'cli'
 
 
-def _build(repo=None, branch='master', tag=None):
-    if not repo:
-        repo = _get_repo()
+def _build(repo=_get_repo(), branch=_get_branch('master'), tag=None):
     if not repo:
         print('failed: are you in a git repo?')
         return
-    
+
     task = Task(git_repo=repo,
                 git_branch=branch,
                 git_tag=tag,
