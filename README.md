@@ -5,23 +5,30 @@ Builds / Test Docker Compose files in GIT HUB and the Pushes them to Docker Hub.
 
 ### install client
 ```
-sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+sudo pip install git+https://github.com/metocean/bob-the-builder.git
 ```
 
 ### install webserver
 ```
 pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-webserver.txt
-sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+sudo pip install git+https://github.com/metocean/bob-the-builder.git
 ```
 
 ### install worker
 ```
 sudo apt-get install python3-dev python3-pycurl git unzip
 pip install -r https://raw.githubusercontent.com/metocean/bob-the-builder/master/requirements-worker.txt
-sudo pip install -e git+https://github.com/metocean/bob-the-builder.git/#egg=bob
+sudo pip install git+https://github.com/metocean/bob-the-builder.git
 ```
 
 ## config
+You can store the settings for bob in if:  
+* /usr/local/etc/bob
+* /etc/bob
+  
+If you would like only your user to use bob store them in:  
+* ${HOME}/.bob/
+
 ### config AWS connection for SQS and DynamoDB
 ```
 mkdir -p ${HOME}/.bob/
