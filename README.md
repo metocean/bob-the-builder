@@ -9,6 +9,7 @@ Bob has three part:
 ## example:
 
 in this example we will build https://github.com/metocean/bob-the-builder-example  
+  
 1) get the source and submit the build job to your bob the builder servers  
 ```
 $ git clone https://github.com/metocean/bob-the-builder-example.git
@@ -23,7 +24,10 @@ $ bob ps
 building - metocean/bob-the-builder-example - master - latest - 0:00 - bob2.metocean.co.nz - gregc
 ```
 or the bob website  
-picture here
+![Image of tasks]
+(https://github.com/metocean/bob-the-builder/blob/master/docs/images/bob-tasks.png)
+![Image of task]
+(https://github.com/metocean/bob-the-builder/blob/master/docs/images/bob-task.png)
 
 ## setting up a project to use bob
 You need to add two files to you projects repo for bob to know how to build:  
