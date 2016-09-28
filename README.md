@@ -66,6 +66,12 @@ varabile description in bob-the-builder.yml:
   * services_to_push: *tell bob what services to push to docker hub.*
     * server: *metocean/bob-example-server e.g. service "server" is push to docker hub as "metocean/bob-example-server"*
 
+## github web_hooks
+if you want bob to build your repo on a "release" you can add the following hook  
+**url:** *https://bob.[your bob webserver]/github_webhook*  
+**secret:** *[your secret in webserver-settings.yml]*  
+**select:** 'Send me everything.'
+
 ## install
 
 ### install client
