@@ -59,6 +59,12 @@ docker_compose:
 notification_emails:
     - [some-one-at]@gmail.com
 ```
+varabile description in bob-the-builder.yml:  
+* docker_compose:
+  * file: points *to the docker compose file to build (default: docker-compose.yml')*
+  * test_service: *points to the docker compose service to run / test. If this docker exits with a non-zero the build fails.*
+  * services_to_push: *tell bob what services to push to docker hub.*
+    * server: *metocean/bob-example-server e.g. service "server" is push to docker hub as "metocean/bob-example-server"*
 
 ## install
 
