@@ -6,7 +6,7 @@ import smtplib
 from email.mime.text import MIMEText
 from bob.worker.settings import load_settings
 import socket
-from bob.common.exceptions import BobTheBuilderException
+from bob.common.exceptions import BobProcessExecutionError
 
 
 def execute(cmd, logfile=None):
@@ -15,14 +15,15 @@ def execute(cmd, logfile=None):
         with open(logfile, 'w') as log:
             error_code = subprocess.call(cmd, shell=True, universal_newlines=True, stdout=log, stderr=log)
             if error_code:
-                raise BobTheBuilderException('"{0}" exited with {1} check logfile for details {2}'.format(
+                raise BobProcessExecutionError('"{0}" exited with {1} check logfile for details {2}'.format(
                     cmd,
                     error_code,
-                    logfile))
+                    logfile), cmd=cmd, returncode=error_code)
     else:
         error_code = subprocess.call(cmd, shell=True, universal_newlines=True)
         if error_code:
-            raise BobTheBuilderException('"{0}" exited with {1}'.format(cmd, error_code))
+            raise BobProcessExecutionError('"{0}" exited with {1}'.format(cmd, error_code),
+                                           cmd=cmd, returncode=error_code)
 
 
 def tail(filename, num_of_lines=100, tail_cmd_timeout=15):
@@ -77,11 +78,14 @@ def execute_with_logging(cmd,
                     tail_callback(lines, log_filename, tail_callback_obj)
 
             if proc.returncode != 0:
-                raise BobTheBuilderException('"{cmd}" exited with {returncode} check logfile for details {log_filename}\n {lines}'.format(
+                raise BobProcessExecutionError('"{cmd}" exited with {returncode} check logfile for details {log_filename}'.format(
                     cmd=cmd,
                     returncode=proc.returncode,
-                    log_filename=log_filename,
-                    lines=lines))
+                    log_filename=log_filename),
+                    cmd=cmd,
+                    returncode=proc.returncode,
+                    details=lines
+                )
         finally:
             if proc.returncode is None:
                 proc.terminate()
