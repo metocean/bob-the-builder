@@ -27,6 +27,7 @@ picture here
 
 ## setting up a project to use bob
 You need to add two files to you projects repo for bob to know how to build:  
+  
 1. docker-compose.yml  - the bob worker uses this for building / testing  
 2. bob-the-builder.yml - this tells the bob worker where to push the image into docker hub, and who to email once it has finished doing so.  
 
