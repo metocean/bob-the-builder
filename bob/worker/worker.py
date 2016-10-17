@@ -4,7 +4,7 @@ from multiprocessing import Process
 from time import sleep
 
 from bob.common.task import (State, Task)
-from bob.common.exceptions import BobTheBuilderException
+from bob.common.exceptions import BobTheBuilderException, BobProcessExecutionError
 import bob.common.queues as queues
 import bob.common.db as db
 from bob.worker.tools import (send_email,
@@ -64,25 +64,23 @@ def _send_state_email(task, state, message, email_addresses):
 def _handle_exception(task, build_path, email_addresses, ex):
 
     traceback.print_exc()
-    ex_type = ex.__class__.__name__
 
-    if hasattr(ex, 'args') and ex.args and len(ex.args) > 0:
-        ex_str = str(ex.args[0])
+    if isinstance(ex, BobProcessExecutionError):
+        message = 'build failed while {0}: {1}'.format(task.state, str(ex))
+    elif isinstance(ex, BobTheBuilderException):
+        message = 'build failed while {0}: {1}'.format(task.state, ex.message)
     else:
-        ex_str = str(ex)
+        message = 'build failed while {0}: {1}'.format(task.state, ex.__class__.__name__)
 
     _set_state(task,
                state=State.failed,
-               message='build failed while {0} with error: {1}: {2}'.format(task.state, ex_type, ex_str),
+               message=message,
                email_addresses=email_addresses)
 
     log_path = os.path.join(build_path, 'error.log')
     with open(log_path, 'w') as f:
         f.write(datetime.utcnow().isoformat() + '\n')
         traceback.print_exc(file=f)
-
-    if isinstance(ex, BobTheBuilderException):
-        return
 
     text = tail(filename=log_path)
     if text and len(text) > 0:

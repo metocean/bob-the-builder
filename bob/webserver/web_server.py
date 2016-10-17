@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Response, jsonify
+from flask import Flask, render_template, request, Response, jsonify, redirect
 from gunicorn.app.base import BaseApplication
 from gunicorn.six import iteritems
 import multiprocessing
@@ -26,7 +26,7 @@ if settings and 'github_hook' in settings:
     app.config['secret'] = settings['github_hook'].get('secret')
 
 
-def _queue_build(repo, branch, tag, created_by):
+def _queue_build(repo, branch='master', tag='latest', created_by=None):
     task = Task(git_repo=repo,
                 git_branch=branch,
                 git_tag=tag,
@@ -86,8 +86,16 @@ def after_request(response):
 @requires_basic_auth
 def tasks_view():
     if request.method == 'POST' and 'repo' in request.form:
-        _queue_build(repo=request.form['repo'], created_by='website')
-    return render_template('tasks.html', tasks=db.load_all_tasks())
+        req_data = request.form['repo'].split(' ')
+        if len(req_data) == 1:
+            _queue_build(repo=req_data[0], created_by='website')
+        elif len(req_data) == 2:
+            _queue_build(repo=req_data[0], branch=req_data[1], created_by='website')
+        elif len(req_data) == 3:
+            _queue_build(repo=req_data[0], branch=req_data[1], tag=req_data[2], created_by='website')
+        return redirect('/')
+    else:
+        return render_template('tasks.html', tasks=db.load_all_tasks())
 
 
 @app.route('/task/<owner>/<repo>/<branch>/<tag>/<created_at>', methods=['GET'])

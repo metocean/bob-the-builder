@@ -51,8 +51,8 @@ def create_task_table(db=get_boto3_resource('dynamodb')):
             },
         ],
         ProvisionedThroughput={
-            'ReadCapacityUnits': 1,
-            'WriteCapacityUnits': 1
+            'ReadCapacityUnits': 3,
+            'WriteCapacityUnits': 2
         }
     )
     # Wait until the table exists.

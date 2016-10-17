@@ -6,7 +6,6 @@ from bob.common.aws import get_boto3_resource
 from bob.worker.aws_helpers import error_code_equals
 
 _task_queue_name = 'bob-task'
-_task_cancel_queue_name = 'bob-task-cancel'
 
 
 def _queue_exists(queue_name, sqs):
@@ -44,16 +43,3 @@ def enqueue_task(task, sqs=get_boto3_resource('sqs')):
 def get_task_queue(sqs=get_boto3_resource('sqs')):
     return sqs.get_queue_by_name(QueueName=_task_queue_name)
 
-
-def enqueue_cancel(task, sqs=get_boto3_resource('sqs')):
-
-    queue = sqs.get_queue_by_name(QueueName=_task_cancel_queue_name)
-    queue.send_message(MessageBody=json.dumps(
-        {'git_repo': task.git_repo,
-         'git_branch': task.git_branch,
-         'git_tag': task.git_tag,
-         'created_at': task.created_at}))
-
-
-def get_task_queue(sqs=get_boto3_resource('sqs')):
-    return sqs.get_queue_by_name(QueueName=_task_queue_name)
