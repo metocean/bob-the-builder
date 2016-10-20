@@ -26,7 +26,7 @@ def execute(cmd, logfile=None):
                                            cmd=cmd, returncode=error_code)
 
 
-def tail(filename, num_of_lines=40, tail_cmd_timeout=5):
+def tail(filename, max_bytes='10KB', tail_cmd_timeout=5):
     """
     returns the tail of the given file.
     :param filename: the filename / path you wish to return the tail of
@@ -36,7 +36,7 @@ def tail(filename, num_of_lines=40, tail_cmd_timeout=5):
     """
     try:
         return subprocess.check_output(['tail',
-                                        '-{0}'.format(num_of_lines),
+                                        '-c {0}'.format(max_bytes),
                                         filename],
                                        universal_newlines=True,
                                        timeout=tail_cmd_timeout)
@@ -50,7 +50,7 @@ def execute_with_logging(cmd,
                          log_filename,
                          tail_callback,
                          tail_callback_obj,
-                         num_of_lines=30,
+                         max_bytes='10KB',
                          tail_interval=15,
                          tail_first_interval=2,
                          terminate_timeout=9):
@@ -80,7 +80,7 @@ def execute_with_logging(cmd,
                         proc.wait(tail_interval)
                 except subprocess.TimeoutExpired:
                     pass
-                lines = tail(log_filename, num_of_lines)
+                lines = tail(log_filename, max_bytes)
                 if tail_callback and lines:
                     tail_callback(lines, log_filename, tail_callback_obj)
 

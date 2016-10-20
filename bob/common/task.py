@@ -1,7 +1,6 @@
 import datetime
 import json
 from dateutil.parser import parse as parse_date
-import bob
 
 
 class State(object):
