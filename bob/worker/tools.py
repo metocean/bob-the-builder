@@ -26,7 +26,7 @@ def execute(cmd, logfile=None):
                                            cmd=cmd, returncode=error_code)
 
 
-def tail(filename, num_of_lines=30, tail_cmd_timeout=5):
+def tail(filename, num_of_lines=40, tail_cmd_timeout=5):
     """
     returns the tail of the given file.
     :param filename: the filename / path you wish to return the tail of

@@ -56,20 +56,19 @@ def _print_task(task, format_str):
                             modified_at=task.modified_at,
                             created_at=task.created_at,
                             created_by=task.get_created_by(),
-                            builder_hostname=task.get_builder_hostname(),
-                            builder_ipaddress=task.get_builder_ipaddress(),
+                            builder_info=task.get_builder_info(),
                             duration=task.get_duration()))
 
 
 def cmd_list(args):
-    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_hostname} - {created_by}'
+    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_info} - {created_by}'
     print(format_str)
     for task in db.load_all_tasks():
         _print_task(task, format_str)
-
+cmd_list(None)
 
 def cmd_ps(args):
-    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_hostname} - {created_by}'
+    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_info} - {created_by}'
     print(format_str)
     for task in db.tasks_ps():
         _print_task(task, format_str)

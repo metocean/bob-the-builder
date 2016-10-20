@@ -1,6 +1,7 @@
 import datetime
 import json
 from dateutil.parser import parse as parse_date
+import bob
 
 
 class State(object):
@@ -32,6 +33,7 @@ class Task(object):
         self.modified_at = self.created_at
         self.builder_ipaddress = None
         self.builder_hostname = None
+        self.builder_version = None
         self.state = None
         self.state_message = None
         self.set_state(State.pending, 'task is waiting to be processed')
@@ -56,6 +58,12 @@ class Task(object):
         if self.builder_ipaddress:
             return self.builder_ipaddress
         return ''
+
+    def get_builder_info(self):
+        text = self.builder_hostname or self.builder_ipaddress
+        if self.builder_version:
+            text += ' v' + self.builder_version
+        return text
 
     def get_created_by(self):
         if self.created_by:
@@ -131,6 +139,7 @@ class Task(object):
         task.modified_at = parse_date(dict['modified_at'])
         task.builder_ipaddress = dict.get('builder_ipaddress', None)
         task.builder_hostname = dict.get('builder_hostname', None)
+        task.builder_version = dict.get('builder_version', None)
         return task
 
     def to_dict(self):
@@ -160,6 +169,10 @@ class Task(object):
 
         if self.builder_hostname:
             result['builder_hostname'] = self.builder_hostname
+
+        if self.builder_version:
+            result['builder_version'] = self.builder_version
+
 
         return result
 

@@ -26,6 +26,7 @@ from bob.common.tools import mkdir_p
 from shutil import rmtree
 from datetime import datetime
 import traceback
+import bob
 
 
 def _set_state(task,
@@ -91,8 +92,11 @@ def _handle_exception(task, build_path, email_addresses, ex):
 def _run_build(git_repo, git_branch, git_tag, created_at):
 
     task = db.load_task(git_repo, git_branch, git_tag, created_at)
+
     task.builder_ipaddress = get_ipaddress()
     task.builder_hostname = get_hostname()
+    task.builder_version = bob.__version__
+
 
     # note there are no spearates in the time string beacause its used for matching up
     # build image names in do_docker_push(), DONOT change this format! hackie i know :P

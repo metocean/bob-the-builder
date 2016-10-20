@@ -71,10 +71,9 @@ $(document).ready(function(){
                     <tr><th>Git Tag</th><td>{{ task.git_tag }}</td>
                         <th>Duration</th><td>{{ task.get_duration() }}</td></tr>
                     <tr><th>State</th><td>{{ task.state }}</td>
-                        <th>Build Server</th><td>{{ task.builder_hostname }}</td></tr>
-                    <th>State Message</th><td colspan="2">{{ task.get_state_message() }}</td>
+                        <th>Build Server</th><td>{{ task.get_builder_info() }}</td></tr>
+                    <tr><th>State Message</th><td colspan="2">{{ task.get_state_message() }}</td>
                         <th></th><td></td></tr>
-                    </tr>
                 </tbody>
             </table>
         </div>
