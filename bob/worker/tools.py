@@ -13,14 +13,14 @@ def execute(cmd, logfile=None):
 
     if logfile:
         with open(logfile, 'w') as log:
-            error_code = subprocess.call(cmd, shell=True, universal_newlines=True, stdout=log, stderr=log)
+            error_code = subprocess.call(cmd, shell=True, stdout=log, stderr=log)
             if error_code:
                 raise BobProcessExecutionError('"{0}" exited with {1} check logfile for details {2}'.format(
                     cmd,
                     error_code,
                     logfile), cmd=cmd, returncode=error_code)
     else:
-        error_code = subprocess.call(cmd, shell=True, universal_newlines=True)
+        error_code = subprocess.call(cmd, shell=True)
         if error_code:
             raise BobProcessExecutionError('"{0}" exited with {1}'.format(cmd, error_code),
                                            cmd=cmd, returncode=error_code)
@@ -76,7 +76,6 @@ def execute_with_logging(cmd,
     with open(log_filename, 'w') as log:
         proc = subprocess.Popen(cmd,
                                 shell=True,
-                                universal_newlines=True,
                                 stdout=log,
                                 stderr=log)
         try:
@@ -92,6 +91,11 @@ def execute_with_logging(cmd,
                 lines = tail(log_filename, max_bytes)
                 if tail_callback and lines:
                     tail_callback(lines, log_filename, tail_callback_obj)
+
+            # do one last tail so we get the end of log
+            lines = tail(log_filename, max_bytes)
+            if tail_callback and lines:
+                tail_callback(lines, log_filename, tail_callback_obj)
 
             if proc.returncode != 0:
                 raise BobProcessExecutionError('"{cmd}" exited with {returncode} check logfile for details {log_filename}'.format(
