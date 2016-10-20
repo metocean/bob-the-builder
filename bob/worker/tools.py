@@ -35,14 +35,23 @@ def tail(filename, max_bytes='10KB', tail_cmd_timeout=5):
     :return: returns None if the file tail Timeout.
     """
     try:
-        return subprocess.check_output(['tail',
-                                        '-c {0}'.format(max_bytes),
-                                        filename],
-                                       universal_newlines=True,
-                                       timeout=tail_cmd_timeout)
+        result = subprocess.check_output(['tail',
+                                          '-c {0}'.format(max_bytes),
+                                          filename],
+                                         timeout=tail_cmd_timeout)
+        try:
+            return bytes(result).decode("utf-8", "strict")
+        except: # UnicodeDecodeError or UnicodeDecodeErrors who knows?? we just catch all.
+            try:
+                return bytes(result).decode("utf-8", "backslashreplace")
+            except:
+                return bytes(result).decode("ascii", "backslashreplace")
+
     except subprocess.TimeoutExpired:
         return None
     except subprocess.CalledProcessError:
+        return None
+    except:
         return None
 
 
