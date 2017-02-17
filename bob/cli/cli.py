@@ -135,11 +135,11 @@ def main():
             print_build_help()
             return
         elif arg == '--repo':
-            repo = sys.argv.pop()
+            repo = sys.argv.pop(0)
         elif arg == '--branch':
-            branch = sys.argv.pop()
+            branch = sys.argv.pop(0)
         elif arg == '--tag':
-            tag = sys.argv.pop()
+            tag = sys.argv.pop(0)
         else:
             args.append(arg)
 
