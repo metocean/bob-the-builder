@@ -5,8 +5,8 @@ from bob.common.aws import get_boto3_resource
 
 from bob.worker.aws_helpers import error_code_equals
 
-#_task_queue_name = 'bob-task'
-_task_queue_name = 'bob-task-test'
+_task_queue_name = 'bob-task'
+# _task_queue_name = 'bob-task-test'
 
 
 def _queue_exists(queue_name, sqs):
