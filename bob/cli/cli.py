@@ -152,15 +152,12 @@ def main():
     if cmd == 'build':
         _build(repo=repo, branch=branch, tag=tag, args=args)
     elif cmd == 'ps':
-        print('ps')
+        cmd_ps(repo=repo, branch=branch, tag=tag)
     elif cmd == 'ls':
-        print('ls')
+        cmd_list(repo=repo, branch=branch, tag=tag)
     elif cmd == 'cancel':
         print('cancel')
 
 
 if __name__ == "__main__":
-    # main()
-    _build('metocean/gregc', branch='master', tag=None, args=[])
-    cmd_ps(repo='metocean/gregc', branch='master', tag=None)
-    cmd_list(repo='metocean/gregc', branch='master', tag=None)
+    main()
