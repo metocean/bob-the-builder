@@ -6,8 +6,8 @@ from bob.common.aws import get_boto3_resource, get_boto3_session
 from bob.common.task import Task, State
 from bob.worker.aws_helpers import error_code_equals
 
-_task_table_name = 'bob-task'
-# _task_table_name = 'bob-task-test'
+#_task_table_name = 'bob-task'
+_task_table_name = 'bob-task-test'
 
 
 def _table_exists(table_name):
@@ -113,13 +113,41 @@ def load_all_tasks(db=get_boto3_resource('dynamodb')):
             yield Task.from_dict(task)
 
 
-def tasks_ps(db=get_boto3_resource('dynamodb')):
+def tasks_list(db=get_boto3_resource('dynamodb'), git_repo=None, git_branch=None, git_tag=None):
+    table = db.Table(_task_table_name)
+    db_filter = None
+
+    if git_repo:
+        db_filter = db_filter & Attr('git_repo').eq(git_repo) if db_filter else Attr('git_repo').eq(git_repo)
+    if git_branch:
+        db_filter = db_filter & Attr('git_branch').eq(git_branch) if db_filter else Attr('git_branch').eq(git_branch)
+    if git_tag:
+        db_filter = db_filter & Attr('git_tag').eq(git_tag) if db_filter else Attr('git_tag').eq(git_tag)
+
+    if db_filter:
+        response = table.query(FilterExpression=db_filter)
+    else:
+        response = table.scan()
+
+    if 'Items' in response:
+        for task in response['Items']:
+            yield Task.from_dict(task)
+
+
+def tasks_ps(db=get_boto3_resource('dynamodb'), git_repo=None, git_branch=None, git_tag=None):
     table = db.Table(_task_table_name)
     db_filter = (Attr('state').eq(State.pending)
                  | Attr('state').eq(State.downloading)
                  | Attr('state').eq(State.building)
                  | Attr('state').eq(State.testing)
                  | Attr('state').eq(State.pushing))
+    if git_repo:
+        db_filter = db_filter & Attr('git_repo').eq(git_repo)
+    if git_branch:
+        db_filter = db_filter & Attr('git_branch').eq(git_branch)
+    if git_tag:
+        db_filter = db_filter & Attr('git_tag').eq(git_tag)
+
     response = table.scan(FilterExpression=db_filter)
     if 'Items' in response:
         for task in response['Items']:

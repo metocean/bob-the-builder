@@ -20,11 +20,13 @@ class Task(object):
                  git_repo,
                  git_branch='master',
                  git_tag='latest',
-                 created_by=None,
+                 build_args=[],
+                 created_by=None
                  ):
         self.git_repo = git_repo
         self.git_branch = git_branch if git_branch else 'master'
         self.git_tag = git_tag if git_tag else 'latest'
+        self.build_args = build_args if build_args else []
         self.events = []
         self.logs = []
         self.created_at = datetime.datetime.utcnow()
@@ -129,6 +131,7 @@ class Task(object):
         task = Task(git_repo=dict['git_repo'],
                     git_branch=dict['git_branch'],
                     git_tag=dict['git_tag'],
+                    build_args=dict.get('build_args', []),
                     created_by=dict.get('created_by', None))
         task.state = dict['state']
         task.state_message = dict.get('state_message')
@@ -146,6 +149,7 @@ class Task(object):
                 'git_repo': self.git_repo,
                 'git_branch': self.git_branch,
                 'git_tag': self.git_tag,
+                'build_args': self.build_args,
                 'state': self.state,
                 'created_at': self.created_at.isoformat(),
                 'modified_at': self.modified_at.isoformat()
@@ -171,7 +175,6 @@ class Task(object):
 
         if self.builder_version:
             result['builder_version'] = self.builder_version
-
 
         return result
 
@@ -200,4 +203,3 @@ class Task(object):
                 self.logs.append(entry)
         else:
             self.logs[index] = entry
-

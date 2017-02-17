@@ -2,7 +2,7 @@
 
 import os
 import pwd
-import argparse
+import sys
 from bob.common import db
 from bob.common import queues
 from bob.common.task import Task
@@ -52,6 +52,7 @@ def _print_task(task, format_str):
     print(format_str.format(repo=task.git_repo,
                             branch=task.git_branch,
                             tag=task.git_tag,
+                            build_args=task.build_args,
                             state=task.state,
                             modified_at=task.modified_at,
                             created_at=task.created_at,
@@ -60,17 +61,17 @@ def _print_task(task, format_str):
                             duration=task.get_duration()))
 
 
-def cmd_list(args):
-    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_info} - {created_by}'
+def cmd_list(repo, branch, tag):
+    format_str = '{state} - {repo} - {branch} - {tag} - {build_args} - {duration} - {builder_info} - {created_by}'
     print(format_str)
-    for task in db.load_all_tasks():
+    for task in db.tasks_list(git_repo=repo, git_branch=branch, git_tag=tag):
         _print_task(task, format_str)
-cmd_list(None)
 
-def cmd_ps(args):
-    format_str = '{state} - {repo} - {branch} - {tag} - {duration} - {builder_info} - {created_by}'
+
+def cmd_ps(repo, branch, tag):
+    format_str = '{state} - {repo} - {branch} - {tag} - {build_args} - {duration} - {builder_info} - {created_by}'
     print(format_str)
-    for task in db.tasks_ps():
+    for task in db.tasks_ps(git_repo=repo, git_branch=branch, git_tag=tag):
         _print_task(task, format_str)
 
 
@@ -81,7 +82,7 @@ def _get_username():
         return 'cli'
 
 
-def _build(repo=_get_repo(), branch=_get_branch('master'), tag=None):
+def _build(repo, branch, tag, args):
     if not repo:
         print('failed: are you in a git repo?')
         return
@@ -89,7 +90,9 @@ def _build(repo=_get_repo(), branch=_get_branch('master'), tag=None):
     task = Task(git_repo=repo,
                 git_branch=branch,
                 git_tag=tag,
+                build_args=args,
                 created_by=_get_username())
+
     db.save_task(task)
     queues.enqueue_task(task)
 
@@ -101,41 +104,63 @@ def _build(repo=_get_repo(), branch=_get_branch('master'), tag=None):
     print(msg)
 
 
-def cmd_build(args):
-    if len(args) == 0:
-        _build()
-    elif len(args) == 1:
-        _build(args[0])
-    elif len(args) == 2:
-        _build(args[0], args[1])
-    elif len(args) == 3:
-        _build(args[0], args[1], args[2])
-    else:
-        print('failed')
-
-
-def cmd_cancel(args):
-    print('Currently not implemented, please use the web interface for the time being.')
+def print_build_help():
+    print ("""Usage: build [options] [SERVICE...]
+Options:
+    --repo      Git Repo to build, will find from current directory otherwise.
+    --branch    Git Branch to build, will find from current directory otherwise.
+    --tag       Git Tag to build.
+    --force-rm  Always remove intermediate containers.
+    --no-cache  Do not use cache when building the image.
+    --pull      Always attempt to pull a newer version of the image.
+""")
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('cmd', action='store', help='build, cancel, ls, ps')
-    parser.add_argument('args', action='store', nargs='*')
-    args = parser.parse_args()
 
-    if args.cmd == 'ls' or args.cmd == 'list':
-        cmd_list(args.args)
+    if len(sys.argv) < 2:
+        print ('commands are: build, ps, ls, cancel')
+        sys.exit(1)
 
-    if args.cmd == 'ps':
-        cmd_ps(args.args)
+    program = sys.argv.pop(0)
+    cmd = sys.argv.pop(0)
 
-    if args.cmd == 'build':
-        cmd_build(args.args)
+    repo = None
+    branch = None
+    tag = None
+    args = []
+    while len(sys.argv):
+        arg = sys.argv.pop(0)
+        if arg == '--help':
+            print_build_help()
+            return
+        elif arg == '--repo':
+            repo = sys.argv.pop()
+        elif arg == '--branch':
+            branch = sys.argv.pop()
+        elif arg == '--tag':
+            tag = sys.argv.pop()
+        else:
+            args.append(arg)
 
-    if args.cmd == 'cancel':
-        cmd_cancel(args.args)
+    if not repo:
+        repo = _get_repo()
+
+    if not branch:
+        branch = _get_branch('master')
+
+    if cmd == 'build':
+        _build(repo=repo, branch=branch, tag=tag, args=args)
+    elif cmd == 'ps':
+        print('ps')
+    elif cmd == 'ls':
+        print('ls')
+    elif cmd == 'cancel':
+        print('cancel')
 
 
-if __name__ == 'main':
-    main()
+if __name__ == "__main__":
+    # main()
+    _build('metocean/gregc', branch='master', tag=None, args=[])
+    cmd_ps(repo='metocean/gregc', branch='master', tag=None)
+    cmd_list(repo='metocean/gregc', branch='master', tag=None)

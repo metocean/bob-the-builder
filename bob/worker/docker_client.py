@@ -2,7 +2,14 @@ import docker
 from time import time
 
 
-def get_recent_images(docker_client=docker.Client(),
+def get_docker_client():
+    try:
+        return docker.APIClient()
+    except:
+        return docker.Client()
+
+
+def get_recent_images(docker_client=get_docker_client(),
                       created_from_in_epoc=time()-48*60*60):
     """
     returns images with:
@@ -31,7 +38,7 @@ def get_recent_images(docker_client=docker.Client(),
         yield image
 
 
-def remove_all_docker_networks(docker_client=docker.Client()):
+def remove_all_docker_networks(docker_client=get_docker_client()):
     """
     removes an non-default docker networks, and stops any container relate to them.
     """
@@ -45,7 +52,7 @@ def remove_all_docker_networks(docker_client=docker.Client()):
         docker_client.remove_network(net['Id'])
 
 
-def remove_all_docker_images(client=docker.Client()):
+def remove_all_docker_images(client=get_docker_client()):
     """
     removes all images and containers on machine
     """

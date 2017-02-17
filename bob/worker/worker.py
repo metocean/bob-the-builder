@@ -2,6 +2,7 @@ import os
 import signal
 from multiprocessing import Process
 from time import sleep
+import requests.exceptions
 
 from bob.common.task import (State, Task)
 from bob.common.exceptions import BobTheBuilderException, BobProcessExecutionError
@@ -96,7 +97,6 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
     task.builder_ipaddress = get_ipaddress()
     task.builder_hostname = get_hostname()
     task.builder_version = bob.__version__
-
 
     # note there are no spearates in the time string beacause its used for matching up
     # build image names in do_docker_push(), DONOT change this format! hackie i know :P
@@ -199,6 +199,26 @@ def _cancel_task(task, process):
         _set_state(task, State.canceled, 'task was canceled')
 
 
+def _remove_all_docker_networks_blocking():
+    while True:
+        try:
+            remove_all_docker_networks()
+            break
+        except requests.exceptions.ReadTimeout:
+            sleep(10)
+            continue
+
+
+def _remove_all_docker_images_blocking():
+    while True:
+        try:
+            remove_all_docker_networks()
+            break
+        except requests.exceptions.ReadTimeout:
+            sleep(10)
+            continue
+
+
 def run():
     db.create_task_table()
     queues.create_task_queue()
@@ -222,8 +242,8 @@ def run():
             continue
 
         # clean up old dockers sitting here before.
-        remove_all_docker_networks()
-        remove_all_docker_images()
+        _remove_all_docker_networks_blocking()
+        _remove_all_docker_images_blocking()
 
         process = Process(target=_run_build, args=(
             task.git_repo,
@@ -251,8 +271,9 @@ def run():
         if process and process.is_alive():
             _cancel_task(db.reload_task(task), process)
 
-        remove_all_docker_networks()
-        remove_all_docker_images()
+        _remove_all_docker_networks_blocking()
+        _remove_all_docker_images_blocking()
+
 
 
 def main():

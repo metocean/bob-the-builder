@@ -93,7 +93,12 @@ def do_build_dockers(task, build_path, source_path, docker_compose_file):
     print('do_build_dockers')
     os.chdir(source_path)
 
-    execute_with_logging('docker-compose -f {0} build --no-cache --pull --force-rm'.format(docker_compose_file),
+    if len(task.build_args) == 0:
+        cmd = 'docker-compose -f {0} build --no-cache --pull --force-rm'.format(docker_compose_file)
+    else:
+        cmd = 'docker-compose -f {0} '.format(docker_compose_file) + ' '.join(task.build_args)
+
+    execute_with_logging(cmd,
                          log_filename=_get_build_log(build_path),
                          tail_callback=_save_log_to_task,
                          tail_callback_obj=task)
