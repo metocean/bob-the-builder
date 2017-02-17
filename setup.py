@@ -19,6 +19,6 @@ setup(
     install_requires=['boto3', 'pyyaml'],
 
     entry_points={
-        'console_scripts': ['bob=bob.cli.bob_cli:main'],
+        'console_scripts': ['bob=bob.cli.cli:main'],
     }
 )
