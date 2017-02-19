@@ -94,7 +94,7 @@ def do_build_dockers(task, build_path, source_path, docker_compose_file):
     os.chdir(source_path)
 
     if len(task.build_args) == 0:
-        cmd = 'docker-compose -f {0} build --no-cache --pull --force-rm'.format(docker_compose_file)
+        cmd = 'docker-compose -f {0} build --no-cache --pull'.format(docker_compose_file)
     else:
         cmd = 'docker-compose -f {0} '.format(docker_compose_file) + ' '.join(task.build_args)
 
