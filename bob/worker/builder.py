@@ -1,6 +1,7 @@
 import yaml
 import os
 from shutil import rmtree
+import json
 
 from bob.common.exceptions import BobTheBuilderException
 from bob.worker.settings import load_settings
@@ -114,7 +115,7 @@ def do_test_dockers(task, build_path, source_path, docker_compose_file, service_
                          tail_callback_obj=task)
 
 
-def _map_services_to_images(source_path, services_to_push):
+def _map_services_to_images(source_path, services_to_push, local_images):
     """
     :param source_path: the source directory path to where the docker-compose.yml lives.
     :param services_to_push: a dictionary of docker_compose services mapping the docker hub push image name.
@@ -122,7 +123,7 @@ def _map_services_to_images(source_path, services_to_push):
     """
     src_dirname = base_dirname(source_path)
     images = {}
-    for image in get_recent_images():
+    for image in local_images:
         for repo_tag_name in image['RepoTags']:
             # if service name is used in bob-the-build.yml
             if repo_tag_name.startswith(src_dirname):
@@ -147,9 +148,24 @@ def _map_services_to_images(source_path, services_to_push):
 def do_push_dockers(task, build_path, source_path, services_to_push):
     print('do_push_dockers')
 
-    images_to_push = _map_services_to_images(source_path, services_to_push)
+    tag_og_filename = _get_tag_log(build_path)
+
+    text = ''
+    local_images = []
+    for image in get_recent_images():
+        local_images.append({'Id': image['Id'], 'RepoTags': image['RepoTags']})
+
+    msg = 'local images found:\n{0}'.format(json.dumps(local_images, indent=2))
+    print(msg)
+    _save_log_to_task(msg, tag_og_filename, task)
+
+    images_to_push = _map_services_to_images(source_path, services_to_push, local_images)
     if not images_to_push and len(images_to_push) == 0:
         raise BobTheBuilderException('Could not match any images to push to docker hub:\r\n{0}'.format(services_to_push))
+
+    msg = '\nimages match for push:\n{0}'.format(json.dumps(images_to_push, indent=2))
+    print(msg)
+    _save_log_to_task(msg, tag_og_filename, task)
 
     settings = load_settings()
 
@@ -183,7 +199,7 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
         execute_with_logging(
             'docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, docker_hub_tag),
-            log_filename=_get_tag_log(build_path),
+            log_filename=tag_og_filename,
             tail_callback=_save_log_to_task,
             tail_callback_obj=task)
 
