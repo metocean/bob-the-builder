@@ -18,6 +18,10 @@ def _get_build_log(build_path):
     return os.path.join(build_path, 'docker-build.log')
 
 
+def _get_image_matching_log(build_path):
+    return os.path.join(build_path, 'image-matching.log')
+
+
 def _get_tag_log(build_path):
     return os.path.join(build_path, 'docker-tag.log')
 
@@ -42,12 +46,23 @@ def _get_git_release_log(build_path):
     return os.path.join(build_path, 'git-release.json')
 
 
-def _save_log_to_task(text, log_path, task):
+def _write_log_to_db(text, log_path, task):
     if not text or len(text) == 0:
         return
     if task is None:
         return
-    task.save_log(text, log_path, insert_first=True)
+    task.save_log(text, log_path)
+    db.save_task(task)
+
+
+def _write_log_file_and_db(text, log_path, task):
+    if not text or len(text) == 0:
+        return
+    if task is None:
+        return
+    with open(log_path, 'w') as f:
+        f.write(text)
+    task.save_log(text, log_path)
     db.save_task(task)
 
 
@@ -101,7 +116,7 @@ def do_build_dockers(task, build_path, source_path, docker_compose_file):
 
     execute_with_logging(cmd,
                          log_filename=_get_build_log(build_path),
-                         tail_callback=_save_log_to_task,
+                         tail_callback=_write_log_to_db,
                          tail_callback_obj=task)
 
 
@@ -111,7 +126,7 @@ def do_test_dockers(task, build_path, source_path, docker_compose_file, service_
 
     execute_with_logging('docker-compose -f {0} run {1}'.format(docker_compose_file, service_to_test),
                          log_filename=_get_test_log(build_path),
-                         tail_callback=_save_log_to_task,
+                         tail_callback=_write_log_to_db,
                          tail_callback_obj=task)
 
 
@@ -148,24 +163,19 @@ def _map_services_to_images(source_path, services_to_push, local_images):
 def do_push_dockers(task, build_path, source_path, services_to_push):
     print('do_push_dockers')
 
-    tag_og_filename = _get_tag_log(build_path)
-
-    text = ''
     local_images = []
     for image in get_recent_images():
         local_images.append({'Id': image['Id'], 'RepoTags': image['RepoTags']})
+    images_to_push = _map_services_to_images(source_path, services_to_push, local_images)
 
     msg = 'local images found:\n{0}'.format(json.dumps(local_images, indent=2))
+    msg += '\n\nimages match for push:\n{0}'.format(json.dumps(images_to_push, indent=2))
     print(msg)
-    _save_log_to_task(msg, tag_og_filename, task)
+    _write_log_file_and_db(msg, _get_image_matching_log(build_path), task)
 
-    images_to_push = _map_services_to_images(source_path, services_to_push, local_images)
     if not images_to_push and len(images_to_push) == 0:
-        raise BobTheBuilderException('Could not match any images to push to docker hub:\r\n{0}'.format(services_to_push))
-
-    msg = '\nimages match for push:\n{0}'.format(json.dumps(images_to_push, indent=2))
-    print(msg)
-    _save_log_to_task(msg, tag_og_filename, task)
+        raise BobTheBuilderException(
+            'Could not match any images to push to docker hub:\r\n{0}'.format(services_to_push))
 
     settings = load_settings()
 
@@ -199,14 +209,14 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
         execute_with_logging(
             'docker tag {0} {1}:{2}'.format(local_image_name, docker_hub_image, docker_hub_tag),
-            log_filename=tag_og_filename,
-            tail_callback=_save_log_to_task,
+            log_filename=_get_tag_log(build_path),
+            tail_callback=_write_log_to_db,
             tail_callback_obj=task)
 
         execute_with_logging(
                 'docker push {0}:{1}'.format(docker_hub_image, docker_hub_tag),
                 log_filename=_get_push_log(build_path),
-                tail_callback=_save_log_to_task,
+                tail_callback=_write_log_to_db,
                 tail_callback_obj=task)
 
 
@@ -222,7 +232,7 @@ def do_clean_up(task, source_path, build_path, docker_compose_file):
                 'docker-compose -f {0} down --remove-orphans --volumes --rmi local'.format(
                     docker_compose_file),
                 log_filename=_get_down_log(build_path),
-                tail_callback=_save_log_to_task,
+                tail_callback=_write_log_to_db,
                 tail_callback_obj=task)
         except:
             pass
