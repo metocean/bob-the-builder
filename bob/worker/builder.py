@@ -131,7 +131,10 @@ def _map_services_to_images(source_path, services_to_push):
                         repo_tag_name = repo_tag_name.split(':', 1)[0]
                     if repo_tag_name.endswith(service_name):
                         images[repo_tag] = services_to_push[service_name]
-                break
+            else:
+                for service_name in services_to_push:
+                    if repo_tag_name == service_name:
+                        images[service_name] = services_to_push[service_name]
     return images
 
 
