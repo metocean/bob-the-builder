@@ -169,7 +169,7 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
     images_to_push = _map_services_to_images(source_path, services_to_push, local_images)
 
     msg = 'local images found:\n{0}'.format(json.dumps(local_images, indent=2))
-    msg += '\n\nimages match for push:\n{0}'.format(json.dumps(images_to_push, indent=2))
+    msg += '\n\nimages matched for push:\n{0}'.format(json.dumps(images_to_push, indent=2))
     print(msg)
     _write_log_file_and_db(msg, _get_image_matching_log(build_path), task)
 
