@@ -154,7 +154,17 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
     else:
         docker_hub_tag = task.git_branch
 
+    if docker_hub_tag == 'master':
+        docker_hub_tag = 'latest'
+
     for local_image_name, docker_hub_image in images_to_push.items():
+
+        #dirty dirty prefix hack for Tom.D!
+        if ':' in docker_hub_image:
+            value = docker_hub_image + '-' + docker_hub_tag
+            value = value.split(':', 1)
+            docker_hub_image = value[0]
+            docker_hub_tag = value[1]
 
         print('pushing docker image: {0} {1}:{2}'.format(local_image_name, docker_hub_image, docker_hub_tag))
 

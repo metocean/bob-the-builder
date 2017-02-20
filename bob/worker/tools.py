@@ -74,6 +74,9 @@ def execute_with_logging(cmd,
 
     first_interval = True
     with open(log_filename, 'w') as log:
+        log.write(cmd + '\n')
+        log.flush()
+
         proc = subprocess.Popen(cmd,
                                 shell=True,
                                 stdout=log,
