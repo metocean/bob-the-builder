@@ -161,7 +161,10 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
         #dirty dirty prefix hack for Tom.D!
         if ':' in docker_hub_image:
-            value = docker_hub_image + '-' + docker_hub_tag
+            if docker_hub_tag == 'latest':
+                value = docker_hub_image
+            else:
+                value = docker_hub_image + '-' + docker_hub_tag
             value = value.split(':', 1)
             docker_hub_image = value[0]
             docker_hub_tag = value[1]

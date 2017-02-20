@@ -74,7 +74,7 @@ def execute_with_logging(cmd,
 
     first_interval = True
     with open(log_filename, 'w') as log:
-        log.write(cmd + '\n')
+        log.write(cmd + '\n------\n\n')
         log.flush()
 
         proc = subprocess.Popen(cmd,
@@ -110,12 +110,16 @@ def execute_with_logging(cmd,
                     details=lines
                 )
         finally:
+            log.write('\n\n------\n' + cmd + '\n')
+            log.flush()
+
             if proc.returncode is None:
                 proc.terminate()
                 try:
                     proc.wait(terminate_timeout)
                 except subprocess.TimeoutExpired:
                     proc.kill()
+
 
 
 def url_download(url, filepath, auth_username=None, auth_password=None):
