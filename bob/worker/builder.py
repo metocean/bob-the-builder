@@ -96,7 +96,7 @@ def do_build_dockers(task, build_path, source_path, docker_compose_file):
     if len(task.build_args) == 0:
         cmd = 'docker-compose -f {0} build '.format(docker_compose_file)
     else:
-        cmd = 'docker-compose -f {0} '.format(docker_compose_file) + ' '.join(task.build_args)
+        cmd = 'docker-compose -f {0} build '.format(docker_compose_file) + ' '.join(task.build_args)
 
     execute_with_logging(cmd,
                          log_filename=_get_build_log(build_path),
