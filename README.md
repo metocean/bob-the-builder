@@ -34,7 +34,8 @@ You need to add two files to you projects repo for bob to know how to build:
   
 1. docker-compose.yml  - the bob worker uses this for building / testing  
 2. bob-the-builder.yml - this tells the bob worker where to push the image into docker hub, and who to email once it has finished doing so.  
-
+  
+EXAMPLE using service name:  
 **docker-compose.yml:**
 ```
 version: '2'
@@ -56,6 +57,46 @@ docker_compose:
     services_to_push:
         server: metocean/bob-example-server
         client: metocean/bob-example-client
+notification_emails:
+    - [some-one-at]@gmail.com
+```
+  
+EXAMPLE using image name:  
+**docker-compose.yml:**
+```
+version: '2'
+services:
+  model:
+    image: metocean/ww3:model
+    build:
+      context: ./docker/model
+      args:
+        physics: st4
+  wrapper-base:
+    image: metocean/ww3:wrapper-base
+    build:
+      context: ./docker/wrapper-base
+      dockerfile: Dockerfile
+    depends_on:
+      - model
+  ww3:
+    image: metocean/ww3
+    build:
+      context: ./
+      args:
+        mopybranch: master
+    depends_on:
+      - wrapper-base
+```
+**bob-the-builder.yml:**
+```
+docker_compose:
+    file: docker-compose.yml
+    #test_service: test_fc
+    services_to_push:
+        "metocean/ww3:model": "metocean/ww3:model"
+        "metocean/ww3:wrapper-base": "metocean/ww3:wrapper-base"
+        "metocean/ww3:latest": "metocean/ww3"
 notification_emails:
     - [some-one-at]@gmail.com
 ```
