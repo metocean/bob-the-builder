@@ -11,24 +11,6 @@ def _check_response(status, response):
         raise BobTheBuilderException('github error: {0}'.format(response['message']))
 
 
-def _get_release(auth_username, auth_password, repo, tag_name):
-
-    status, releases = url_get_json('https://api.github.com/repos/{0}/releases'.format(repo),
-                                    auth_username,
-                                    auth_password)
-    if not releases:
-        raise BobTheBuilderException('github release {0}:{1} not found'.format(repo, tag_name))
-
-    _check_response(status, releases)
-
-    for release in releases:
-        if tag_name != release.get('tag_name'):
-            continue
-        return status, release
-
-    raise BobTheBuilderException('github release {0}:{1} not found'.format(repo, tag_name))
-
-
 def _get_tag(auth_username, auth_password, repo, tag_name):
 
     status, tags = url_get_json('https://api.github.com/repos/{0}/tags'.format(repo),
@@ -63,7 +45,7 @@ def _download(url, file_path, login, password):
         raise BobTheBuilderException('{status}: Could download "{url}"'.format(url=url, status=status))
 
 
-def download_release_source(repo, tag_name, output_path, auth_username, auth_password):
+def download_tag_source(repo, tag_name, output_path, auth_username, auth_password):
     """
     downloads and unzip the source for the given git repo's release.
     :param repo_owner_name: the git repo owner.
@@ -73,13 +55,6 @@ def download_release_source(repo, tag_name, output_path, auth_username, auth_pas
     :param auth_password: git password.
     :return: the directory path to source.
     """
-    status, release = _get_release(auth_username, auth_password, repo, tag_name)
-    if not release:
-        raise BobTheBuilderException('Git releases request failed status:{0}'.format(status))
-
-    with open(os.path.join(output_path, 'git-release.json'), 'w') as f:
-        f.write(json.dumps(release, indent=2))
-
     status, tag = _get_tag(auth_username, auth_password, repo, tag_name)
     if not tag:
         raise BobTheBuilderException('Git tags request failed status:{0}'.format(status))
@@ -87,10 +62,7 @@ def download_release_source(repo, tag_name, output_path, auth_username, auth_pas
     with open(os.path.join(output_path, 'git-tag.json'), 'w') as f:
         f.write(json.dumps(tag, indent=2))
 
-    download_url = release.get('zipball_url')
-    if not download_url:
-        download_url = tag['zipball_url']
-
+    download_url = tag.get('zipball_url')
     if not download_url:
         raise BobTheBuilderException('Could find a download url')
 

@@ -5,7 +5,7 @@ from shutil import rmtree
 from bob.common.exceptions import BobTheBuilderException
 from bob.worker.settings import load_settings
 from bob.worker.docker_client import get_recent_images
-from bob.worker.git_hub import download_release_source, download_branch_source
+from bob.worker.git_hub import download_tag_source, download_branch_source
 from bob.worker.tools import (execute,
                               execute_with_logging,
                               rename_basedir,
@@ -56,11 +56,11 @@ def do_download_git_repo(task, build_path, created_at_str):
     settings = load_settings()
 
     if task.git_tag and task.git_tag != 'latest':
-        source_path = download_release_source(task.git_repo,
-                                              task.git_tag,
-                                              build_path,
-                                              settings['git_hub']['login'],
-                                              settings['git_hub']['password'])
+        source_path = download_tag_source(task.git_repo,
+                                          task.git_tag,
+                                          build_path,
+                                          settings['git_hub']['login'],
+                                          settings['git_hub']['password'])
     else:
         source_path = download_branch_source(task.git_repo,
                                              build_path,
@@ -128,7 +128,7 @@ def _map_services_to_images(source_path, services_to_push):
                 for service_name in services_to_push:
                     repo_tag = repo_tag_name
                     if ':' in repo_tag_name:
-                        repo_tag_name = repo_tag_name.rsplit(':')[0]
+                        repo_tag_name = repo_tag_name.split(':', 1)[0]
                     if repo_tag_name.endswith(service_name):
                         images[repo_tag] = services_to_push[service_name]
                 break
@@ -149,13 +149,10 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
         execute('docker login -u {login} -p {password}'.format(login=settings['docker_hub']['login'],
                                                                password=settings['docker_hub']['password']))
 
-    if not task.git_branch or task.git_branch == 'master':
+    if task.git_tag and len(task.git_tag) and task.git_tag != 'latest':
         docker_hub_tag = task.git_tag
     else:
-        if not task.git_tag or task.git_tag == 'latest':
-            docker_hub_tag = task.git_branch
-        else:
-            docker_hub_tag = '{0}-{1}'.format(task.git_branch, task.git_tag)
+        docker_hub_tag = task.git_branch
 
     for local_image_name, docker_hub_image in images_to_push.items():
 
