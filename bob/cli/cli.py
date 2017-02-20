@@ -82,7 +82,7 @@ def _get_username():
         return 'cli'
 
 
-def _build(repo, branch, tag, args):
+def _build(repo, branch='master', tag=None, args=[]):
     if not repo:
         print('failed: are you in a git repo?')
         return

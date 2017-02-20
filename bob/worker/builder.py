@@ -124,17 +124,23 @@ def _map_services_to_images(source_path, services_to_push):
     images = {}
     for image in get_recent_images():
         for repo_tag_name in image['RepoTags']:
+            # if service name is used in bob-the-build.yml
             if repo_tag_name.startswith(src_dirname):
                 for service_name in services_to_push:
-                    repo_tag = repo_tag_name
+                    docker_hub_name = services_to_push[service_name]
                     if ':' in repo_tag_name:
                         repo_tag_name = repo_tag_name.split(':', 1)[0]
                     if repo_tag_name.endswith(service_name):
-                        images[repo_tag] = services_to_push[service_name]
+                        images[docker_hub_name] = image['Id']
+
+            # else image name is used in bob-the-build.yml
             else:
-                for service_name in services_to_push:
-                    if repo_tag_name == service_name:
-                        images[service_name] = services_to_push[service_name]
+                for image_name in services_to_push:
+                    docker_hub_name = services_to_push[image_name]
+                    if ':' not in image_name:
+                        image_name += ':latest'
+                    if repo_tag_name == image_name:
+                        images[docker_hub_name] = image['Id']
     return images
 
 
@@ -143,8 +149,7 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
 
     images_to_push = _map_services_to_images(source_path, services_to_push)
     if not images_to_push and len(images_to_push) == 0:
-        raise BobTheBuilderException('Could not match any images to push to github:\r\n{0}',
-                                     services_to_push)
+        raise BobTheBuilderException('Could not match any images to push to docker hub:\r\n{0}'.format(services_to_push))
 
     settings = load_settings()
 
@@ -153,14 +158,16 @@ def do_push_dockers(task, build_path, source_path, services_to_push):
                                                                password=settings['docker_hub']['password']))
 
     if task.git_tag and len(task.git_tag) and task.git_tag != 'latest':
-        docker_hub_tag = task.git_tag
+        tag = task.git_tag
     else:
-        docker_hub_tag = task.git_branch
+        tag = task.git_branch
 
-    if docker_hub_tag == 'master':
-        docker_hub_tag = 'latest'
+    if tag == 'master':
+        tag = 'latest'
 
-    for local_image_name, docker_hub_image in images_to_push.items():
+    for docker_hub_image in images_to_push:
+        local_image_name = images_to_push[docker_hub_image]
+        docker_hub_tag = tag
 
         #dirty dirty prefix hack for Tom.D!
         if ':' in docker_hub_image:
