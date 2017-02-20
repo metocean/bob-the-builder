@@ -7,7 +7,7 @@ from bob.common.task import Task, State
 from bob.worker.aws_helpers import error_code_equals
 
 _task_table_name = 'bob-task'
-# _task_table_name = 'bob-task-test'
+# _task_table_name = 'bob-task-test-2'
 
 
 def _table_exists(table_name):
