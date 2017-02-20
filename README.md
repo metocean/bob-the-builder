@@ -35,7 +35,7 @@ You need to add two files to you projects repo for bob to know how to build:
 1. docker-compose.yml  - the bob worker uses this for building / testing  
 2. bob-the-builder.yml - this tells the bob worker where to push the image into docker hub, and who to email once it has finished doing so.  
   
-EXAMPLE using service name:  
+### Example using service name:  
 **docker-compose.yml:**
 ```
 version: '2'
@@ -61,7 +61,7 @@ notification_emails:
     - [some-one-at]@gmail.com
 ```
   
-EXAMPLE using image name:  
+### Example using image name:  
 **docker-compose.yml:**
 ```
 version: '2'
