@@ -148,7 +148,7 @@ def github_payload():
         if signature is None:
             return jsonify(msg='Unauthorized, X-Hub-Signature was not found in headers'), 401
 
-        elif not _verify_hmac_hash(request.data, signature, bytes(secret, 'UTF-8')):
+        elif not _verify_hmac_hash(request.data, signature, secret):
             return jsonify(msg='Unauthorized, X-Hub-Signature did not match secret'), 401
 
     if event_type is None:
