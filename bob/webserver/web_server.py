@@ -117,11 +117,21 @@ def task_view(owner, repo, branch, tag, created_at):
                            cancel_disabled=cancel_disabled)
 
 
-def _verify_hmac_hash(data, signature, secret):
-    if sys.version_info[0] != 2 and isinstance(secret, str):
+def _verify_hmac_hash(request_body, supplied_signature, secret):
+    from sys import hexversion
+    if hexversion >= 0x03000000:
         secret = bytearray(secret, 'utf-8')
-    mac = hmac.new(secret, msg=data, digestmod=hashlib.sha1)
-    return hmac.compare_digest('sha1=' + mac.hexdigest(), signature)
+    else:
+        secret = bytearray(secret)
+        supplied_signature = str(supplied_signature)
+
+    mac = hmac.new(secret, msg=request_body, digestmod=hashlib.sha1)
+    calculated_signature = 'sha1=' + str(mac.hexdigest())
+
+    if hexversion >= 0x020707F0:
+        return hmac.compare_digest(calculated_signature, supplied_signature)
+    else:
+        return calculated_signature == supplied_signature
 
 
 @app.route("/github_webhook", methods=['POST'])
