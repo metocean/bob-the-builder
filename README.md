@@ -109,9 +109,10 @@ varabile description in bob-the-builder.yml:
 
 ## github web_hooks
 if you want bob to build your repo on a "release" you can add the following hook  
-**url:** *https://bob.[your bob webserver]/github_webhook*  
-**secret:** *[your secret in webserver-settings.yml]*  
-**select:** 'Send me everything.'
+**Payload URL:** *https://bob.[your bob webserver]/github_webhook*  
+**Secret:** *[your secret in webserver-settings.yml]*  
+**Content type:** application/json  
+**select:** 'Send me everything.'  
 
 ## install
 
