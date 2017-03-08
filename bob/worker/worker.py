@@ -212,7 +212,7 @@ def _remove_all_docker_networks_blocking():
 def _remove_all_docker_images_blocking():
     while True:
         try:
-            remove_all_docker_networks()
+            remove_all_docker_images()
             break
         except requests.exceptions.ReadTimeout:
             sleep(10)
