@@ -139,9 +139,9 @@ class Task(object):
         task.logs = dict.get('logs', [])
         task.created_at = parse_date(dict['created_at'])
         task.modified_at = parse_date(dict['modified_at'])
-        task.builder_ipaddress = dict.get('builder_ipaddress', None)
-        task.builder_hostname = dict.get('builder_hostname', None)
-        task.builder_version = dict.get('builder_version', None)
+        task.builder_ipaddress = dict.get('builder_ipaddress', '')
+        task.builder_hostname = dict.get('builder_hostname', '')
+        task.builder_version = dict.get('builder_version', '')
         return task
 
     def to_dict(self):

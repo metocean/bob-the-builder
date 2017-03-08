@@ -94,9 +94,13 @@ def _run_build(git_repo, git_branch, git_tag, created_at):
 
     task = db.load_task(git_repo, git_branch, git_tag, created_at)
 
-    task.builder_ipaddress = get_ipaddress()
-    task.builder_hostname = get_hostname()
-    task.builder_version = bob.__version__
+    setattr(task, 'builder_ipaddress', get_ipaddress())
+    setattr(task, 'builder_hostname', get_hostname())
+    setattr(task, 'builder_version', bob.__version__)
+
+    # task.builder_ipaddress = get_ipaddress()
+    # task.builder_hostname = get_hostname()
+    # task.builder_version = bob.__version__
 
     # note there are no spearates in the time string beacause its used for matching up
     # build image names in do_docker_push(), DONOT change this format! hackie i know :P
