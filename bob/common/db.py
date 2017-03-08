@@ -1,20 +1,20 @@
 from datetime import datetime
 
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Attr, Key
 from bob.common.aws import get_boto3_resource, get_boto3_session
 
 from bob.common.task import Task, State
 from bob.worker.aws_helpers import error_code_equals
 
 _task_table_name = 'bob-task'
-# _task_table_name = 'bob-task-test'
+#_task_table_name = 'bob-task-test'
 
 
 def _table_exists(table_name):
     client = get_boto3_session().client('dynamodb')
     try:
-      print(client.describe_table(TableName=table_name))
-      return True
+        print(client.describe_table(TableName=table_name))
+        return True
     except Exception as e:
         if error_code_equals(e, 'ResourceNotFoundException'):
             return False
@@ -66,9 +66,9 @@ def save_task(task, db=get_boto3_resource('dynamodb')):
 
     task.modified_at = datetime.utcnow()
     dict = task.to_dict()
-    dict['key'] = '{0}:{1}:{2}'.format(task.git_branch,
-                                       task.git_tag,
-                                       task.created_at.isoformat())
+    dict['key'] = '{0}:{1}:{2}'.format(task.created_at.isoformat(),
+                                       task.git_branch,
+                                       task.git_tag)
 
     table.put_item(Item=dict)
 
@@ -82,9 +82,9 @@ def load_task(git_repo,
     response = table.get_item(
         Key={
             'git_repo': git_repo,
-            'key': '{0}:{1}:{2}'.format(git_branch,
-                                        git_tag,
-                                        created_at.isoformat())
+            'key': '{0}:{1}:{2}'.format(created_at.isoformat(),
+                                        git_branch,
+                                        git_tag)
         }
     )
     if 'Item' in response:
@@ -97,9 +97,9 @@ def reload_task(task, db=get_boto3_resource('dynamodb')):
     response = table.get_item(
         Key={
             'git_repo': task.git_repo,
-            'key': '{0}:{1}:{2}'.format(task.git_branch,
-                                        task.git_tag,
-                                        task.created_at.isoformat())
+            'key': '{0}:{1}:{2}'.format(task.created_at.isoformat(),
+                                        task.git_branch,
+                                        task.git_tag)
         }
     )
     return Task.from_dict(response['Item'])
@@ -117,15 +117,13 @@ def tasks_list(db=get_boto3_resource('dynamodb'), git_repo=None, git_branch=None
     table = db.Table(_task_table_name)
     db_filter = None
 
-    if git_repo:
-        db_filter = db_filter & Attr('git_repo').eq(git_repo) if db_filter else Attr('git_repo').eq(git_repo)
     if git_branch:
         db_filter = db_filter & Attr('git_branch').eq(git_branch) if db_filter else Attr('git_branch').eq(git_branch)
     if git_tag:
         db_filter = db_filter & Attr('git_tag').eq(git_tag) if db_filter else Attr('git_tag').eq(git_tag)
 
-    if db_filter:
-        response = table.query(FilterExpression=db_filter)
+    if db_filter and git_repo:
+        response = table.query(FilterExpression=db_filter, KeyConditionExpression=Key('git_repo').eq(git_repo))
     else:
         response = table.scan()
 
@@ -141,14 +139,17 @@ def tasks_ps(db=get_boto3_resource('dynamodb'), git_repo=None, git_branch=None, 
                  | Attr('state').eq(State.building)
                  | Attr('state').eq(State.testing)
                  | Attr('state').eq(State.pushing))
-    if git_repo:
-        db_filter = db_filter & Attr('git_repo').eq(git_repo)
     if git_branch:
         db_filter = db_filter & Attr('git_branch').eq(git_branch)
     if git_tag:
         db_filter = db_filter & Attr('git_tag').eq(git_tag)
 
-    response = table.scan(FilterExpression=db_filter)
+    if db_filter and git_repo:
+        response = table.query(FilterExpression=db_filter, KeyConditionExpression=Key('git_repo').eq(git_repo))
+    else:
+        response = table.scan()
+
     if 'Items' in response:
         for task in response['Items']:
             yield Task.from_dict(task)
+

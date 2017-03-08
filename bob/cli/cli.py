@@ -31,7 +31,7 @@ def _get_repo():
         if repo.endswith('.git'):
             repo = repo[0:repo.rindex('.git')]
         return repo.lower()
-    except Exception:
+    except:
         return None
 
 
