@@ -11,7 +11,6 @@ from bob.common import queues
 from bob.webserver.settings import load_settings
 import hashlib
 import hmac
-import sys
 import os
 
 
