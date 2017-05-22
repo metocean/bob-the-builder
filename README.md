@@ -145,10 +145,10 @@ If you would like only your user to use bob store them in:
 ### config AWS connection for SQS and DynamoDB
 ```
 mkdir -p ${HOME}/.bob/
-touch ${HOME}/.aws/aws-settings.yml
+touch ${HOME}/.bob/aws-settings.yml
 ```
 ```
-region: us-west-2
+region_name: us-west-2
 aws_access_key_id: AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
