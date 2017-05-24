@@ -149,8 +149,8 @@ touch ${HOME}/.bob/aws-settings.yml
 ```
 ```
 region_name: us-west-2
-aws_access_key_id: AKIAIOSFODNN7EXAMPLE
-aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+aws_access_key_id: AKIAIOSFODNN7_EXAMPLE_ID
+aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCY_EXAMPLE_KEY
 ```
 ### config worker
 ```
