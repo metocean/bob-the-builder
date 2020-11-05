@@ -9,7 +9,7 @@ def _load_settings():
     if not os.path.isfile(file_path):
         return None
     with open(file_path, 'r') as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
 
 
 def get_boto3_session():
