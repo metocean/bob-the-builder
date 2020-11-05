@@ -8,4 +8,4 @@ def load_settings():
     if not os.path.isfile(path):
         return {}
     with open(path, 'r') as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
