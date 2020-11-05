@@ -7,7 +7,7 @@ from bob.common.tools import mkdir_if_not_exist
 
 def load_settings():
     with open(find_settings_file('worker-settings.yml'), 'r') as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
 
 
 def get_base_build_path():
